@@ -3,249 +3,306 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Colleton County Library · MiFi Tracker</title>
+<title>Colleton County Library - MiFi Tracker</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
-  :root {
-    --bg:#0d1117;--surface:#161b22;--border:#21262d;--border2:#30363d;
-    --text:#e6edf3;--muted:#7d8590;--accent:#1f6feb;--accent2:#388bfd;
-    --green:#2ea043;--green-bg:#0f2a1a;--yellow:#d29922;--yellow-bg:#2a1f0a;
-    --red:#da3633;--red-bg:#2a0f0f;--orange:#e3b341;--purple:#8957e5;--cyan:#39c5cf;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
-  #app{display:flex;flex-direction:column;height:100vh;}
-  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:16px;height:56px;flex-shrink:0;}
-  header .logo{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;color:var(--accent2);letter-spacing:.5px;}
-  header .logo span{color:var(--muted);}
-  header nav{display:flex;gap:2px;margin-left:auto;}
-  header nav button{background:none;border:none;color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;transition:all .15s;}
-  header nav button:hover{background:var(--border);color:var(--text);}
-  header nav button.active{background:var(--accent);color:#fff;}
-  #db-status{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap;}
-  #db-status.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
-  #db-status.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
-  #db-status.loading{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
-  .main-area{display:flex;flex:1;overflow:hidden;}
-  .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:16px 12px;flex-shrink:0;overflow-y:auto;}
-  .content{flex:1;overflow-y:auto;padding:20px 24px;}
-  .stat-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
-  .stat-card .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
-  .stat-card .value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;}
-  .stat-card.green .value{color:var(--green);}
-  .stat-card.blue  .value{color:var(--accent2);}
-  .stat-card.red   .value{color:var(--red);}
-  .stat-card.yellow .value{color:var(--yellow);}
-  .stat-card.orange .value{color:var(--orange);}
-  .stat-card.purple .value{color:var(--purple);}
-  .sidebar-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:14px 2px 8px;font-weight:600;}
-  .tab-bar{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--border);}
-  .tab{background:none;border:none;color:var(--muted);padding:8px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
-  .tab:hover{color:var(--text);}
-  .tab.active{color:var(--accent2);border-bottom-color:var(--accent2);}
-  .toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
-  .search-box{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;}
-  .search-box:focus{border-color:var(--accent);}
-  select.filter{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;outline:none;cursor:pointer;}
-  .btn{padding:7px 16px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
-  .btn-primary{background:var(--accent);color:#fff;}
-  .btn-primary:hover{background:var(--accent2);}
-  .btn-success{background:var(--green);color:#fff;}
-  .btn-danger{background:var(--red);color:#fff;}
-  .btn-ghost{background:var(--surface);border:1px solid var(--border2);color:var(--text);}
-  .btn-ghost:hover{border-color:var(--accent);color:var(--accent2);}
-  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  thead th{background:var(--surface);color:var(--muted);font-weight:600;text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
-  thead th:hover{color:var(--text);}
-  tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
-  tbody tr:last-child{border-bottom:none;}
-  tbody tr:hover{background:var(--surface);}
-  tbody td{padding:9px 14px;vertical-align:middle;}
-  .mono{font-family:'IBM Plex Mono',monospace;font-size:12px;}
-  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;}
-  .badge-A{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
-  .badge-C{background:#0d2040;color:var(--accent2);border:1px solid var(--accent);}
-  .badge-S{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
-  .badge-D{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
-  .badge-M{background:#1a0d2a;color:var(--purple);border:1px solid var(--purple);}
-  .badge-P{background:#0d2020;color:var(--cyan);border:1px solid var(--cyan);}
-  .badge-BLOCKED{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
-  .badge-WARNED{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
-  .badge-LATE{background:#1a1a0d;color:var(--orange);border:1px solid var(--orange);}
-  .overdue{color:var(--red)!important;font-weight:600;}
-  .due-soon{color:var(--yellow)!important;font-weight:600;}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;}
-  .overlay.hidden{display:none!important;}
-  .modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;}
-  .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
-  .modal-header h2{font-size:16px;font-weight:600;}
-  .modal-body{padding:20px 24px;}
-  .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
-  .close-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
-  .close-btn:hover{color:var(--text);background:var(--border);}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .form-group{display:flex;flex-direction:column;gap:5px;}
-  .form-group.full{grid-column:1/-1;}
-  .form-group label{font-size:12px;color:var(--muted);font-weight:500;}
-  .form-group input,.form-group select,.form-group textarea{background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:13px;outline:none;}
-  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
-  .form-group textarea{resize:vertical;min-height:64px;}
-  .log-entry{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;}
-  .log-entry .ts{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;margin-top:1px;}
-  .log-entry .msg{font-size:13px;line-height:1.5;}
-  .log-entry.checkout .dot{color:var(--accent2);}
-  .log-entry.return   .dot{color:var(--green);}
-  .log-entry.edit     .dot{color:var(--yellow);}
-  .log-entry.add      .dot{color:var(--cyan);}
-  .log-entry.delete   .dot{color:var(--red);}
-  .log-entry .dot{font-size:18px;line-height:1;}
-  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-  .detail-item .dk{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
-  .detail-item .dv{font-size:13px;font-family:'IBM Plex Mono',monospace;}
-  .empty{color:var(--muted);font-size:13px;padding:40px;text-align:center;}
-  .saving-indicator{position:fixed;bottom:16px;right:16px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;}
-  .saving-indicator.show{opacity:1;}
-  ::-webkit-scrollbar{width:6px;height:6px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
-  .hidden{display:none!important;}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+:root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--border2:#30363d;--text:#e6edf3;--muted:#7d8590;--accent:#1f6feb;--accent2:#388bfd;--green:#2ea043;--green-bg:#0f2a1a;--yellow:#d29922;--yellow-bg:#2a1f0a;--red:#da3633;--red-bg:#2a0f0f;--orange:#e3b341;--purple:#8957e5;--cyan:#39c5cf;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+#app{display:flex;flex-direction:column;height:100vh;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:12px;height:56px;flex-shrink:0;}
+.logo{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;color:var(--accent2);letter-spacing:.5px;white-space:nowrap;}
+.logo span{color:var(--muted);}
+nav{display:flex;gap:2px;margin-left:auto;}
+nav button{background:none;border:none;color:var(--muted);padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap;}
+nav button:hover{background:var(--border);color:var(--text);}
+nav button.active{background:var(--accent);color:#fff;}
+#db-status{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap;}
+#db-status.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+#db-status.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+#db-status.loading{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
+.main-area{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:14px 10px;flex-shrink:0;overflow-y:auto;}
+.content{flex:1;overflow-y:auto;padding:18px 20px;}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+.stat-card:hover{border-color:var(--border2);}
+.stat-card .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;}
+.stat-card .val{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;}
+.stat-card.green .val{color:var(--green);}
+.stat-card.blue .val{color:var(--accent2);}
+.stat-card.red .val{color:var(--red);}
+.stat-card.yellow .val{color:var(--yellow);}
+.stat-card.orange .val{color:var(--orange);}
+.stat-card.purple .val{color:var(--purple);}
+.sidebar-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:12px 2px 6px;font-weight:600;}
+.loc-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:5px;cursor:pointer;transition:background .1s;}
+.loc-row:hover{background:var(--border);}
+.loc-row.active-loc{background:var(--border2);}
+.loc-name{font-size:12px;font-weight:600;color:var(--cyan);}
+.loc-count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);}
+.tab-bar{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{background:none;border:none;color:var(--muted);padding:7px 13px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent2);}
+.toolbar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.search-box{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;}
+.search-box:focus{border-color:var(--accent);}
+select.filter{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;outline:none;cursor:pointer;}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-ghost{background:var(--surface);border:1px solid var(--border2);color:var(--text);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent2);}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--surface);color:var(--muted);font-weight:600;text-align:left;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--text);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface);}
+tbody td{padding:8px 12px;vertical-align:middle;}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-A{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+.badge-C{background:#0d2040;color:var(--accent2);border:1px solid var(--accent);}
+.badge-S{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
+.badge-D{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+.badge-M{background:#1a0d2a;color:var(--purple);border:1px solid var(--purple);}
+.badge-P{background:#0d2020;color:var(--cyan);border:1px solid var(--cyan);}
+.badge-BLOCKED{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+.badge-WARNED{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
+.badge-LATE{background:#1a1a0d;color:var(--orange);border:1px solid var(--orange);}
+.overdue{color:var(--red)!important;font-weight:600;}
+.due-soon{color:var(--yellow)!important;font-weight:600;}
+.loc-header td{background:var(--surface);color:var(--cyan);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:6px 12px;border-bottom:1px solid var(--border);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;}
+.overlay.hidden{display:none!important;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;}
+.modal-sm{max-width:500px;}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h2{font-size:16px;font-weight:600;}
+.modal-body{padding:18px 22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.close-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;border-radius:4px;}
+.close-btn:hover{color:var(--text);background:var(--border);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:12px;color:var(--muted);font-weight:500;}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:13px;outline:none;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:60px;}
+.log-entry{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 12px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start;}
+.log-entry .ts{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;margin-top:1px;}
+.log-entry .msg{font-size:13px;line-height:1.5;}
+.log-entry.checkout .dot{color:var(--accent2);}
+.log-entry.return .dot{color:var(--green);}
+.log-entry.edit .dot{color:var(--yellow);}
+.log-entry.add .dot{color:var(--cyan);}
+.log-entry.delete .dot{color:var(--red);}
+.log-entry .dot{font-size:16px;line-height:1.2;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.detail-item .dk{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.detail-item .dv{font-size:13px;font-family:'IBM Plex Mono',monospace;}
+.empty{color:var(--muted);font-size:13px;padding:40px;text-align:center;}
+.io-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+.io-card{background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:18px;}
+.io-card h3{font-size:13px;font-weight:600;margin-bottom:4px;}
+.io-card p{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.io-btn-row{display:flex;flex-direction:column;gap:8px;}
+.io-status{font-size:12px;min-height:18px;margin-top:6px;}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;}
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 </style>
 </head>
 <body>
 <div id="app">
-  <header>
-    <div class="logo">CCL<span>/</span>MiFi<span> Tracker</span></div>
-    <nav>
-      <button class="active" onclick="showSection('devices')">📡 Devices</button>
-      <button onclick="showSection('patrons')">👤 Patrons</button>
-      <button onclick="showSection('log')">📋 Transaction Log</button>
-    </nav>
-    <div id="db-status" class="loading">⏳ Connecting...</div>
-  </header>
-  <div class="main-area">
-    <div class="sidebar">
-      <div class="sidebar-title">Summary</div>
-      <div class="stat-card green"><div class="label">Available</div><div class="value" id="stat-A">—</div></div>
-      <div class="stat-card blue"><div class="label">Checked Out</div><div class="value" id="stat-C">—</div></div>
-      <div class="stat-card red"><div class="label">Overdue</div><div class="value" id="stat-OD">—</div></div>
-      <div class="stat-card yellow"><div class="label">Suspended</div><div class="value" id="stat-S">—</div></div>
-      <div class="stat-card orange"><div class="label">Missing</div><div class="value" id="stat-M">—</div></div>
-      <div class="stat-card purple"><div class="label">Deactivated</div><div class="value" id="stat-D">—</div></div>
+<header>
+  <div class="logo">CCL<span>/</span>MiFi<span> Tracker</span></div>
+  <nav>
+    <button class="active" onclick="showSection('devices')">&#128225; Devices</button>
+    <button onclick="showSection('patrons')">&#128100; Patrons</button>
+    <button onclick="showSection('log')">&#128203; Log</button>
+    <button onclick="showSection('io')">&#8645; Import/Export</button>
+  </nav>
+  <div id="db-status" class="loading">&#9203; Connecting...</div>
+</header>
+<div class="main-area">
+<div class="sidebar">
+  <div class="sidebar-title">Summary</div>
+  <div class="stat-card green" onclick="setFilter('A','')"><div class="lbl">Available</div><div class="val" id="stat-A">-</div></div>
+  <div class="stat-card blue"  onclick="setFilter('C','')"><div class="lbl">Checked Out</div><div class="val" id="stat-C">-</div></div>
+  <div class="stat-card red"   onclick="setFilter('OD','')"><div class="lbl">Overdue</div><div class="val" id="stat-OD">-</div></div>
+  <div class="stat-card yellow" onclick="setFilter('S','')"><div class="lbl">Suspended</div><div class="val" id="stat-S">-</div></div>
+  <div class="stat-card orange" onclick="setFilter('M','')"><div class="lbl">Missing</div><div class="val" id="stat-M">-</div></div>
+  <div class="stat-card purple" onclick="setFilter('D','')"><div class="lbl">Deactivated</div><div class="val" id="stat-D">-</div></div>
+  <div class="sidebar-title">Available by Location</div>
+  <div id="loc-breakdown"></div>
+</div>
+<div class="content">
+
+<!-- DEVICES -->
+<div id="section-devices">
+  <div class="tab-bar" id="dev-tabs">
+    <button class="tab active" onclick="switchTab('all',this)">All</button>
+    <button class="tab" onclick="switchTab('A',this)">Available</button>
+    <button class="tab" onclick="switchTab('C',this)">Checked Out</button>
+    <button class="tab" onclick="switchTab('OD',this)">Overdue</button>
+    <button class="tab" onclick="switchTab('S',this)">Suspended</button>
+    <button class="tab" onclick="switchTab('M',this)">Missing</button>
+    <button class="tab" onclick="switchTab('D',this)">Deactivated</button>
+    <button class="tab" onclick="switchTab('P',this)">Processing</button>
+  </div>
+  <div class="toolbar">
+    <input class="search-box" id="dev-search" placeholder="Search device #, barcode, IMEI, phone, patron..." oninput="renderDevices()">
+    <select class="filter" id="dev-lib" onchange="renderDevices()">
+      <option value="">All Locations</option>
+      <option>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option>
+    </select>
+    <button class="btn btn-primary" onclick="openAddDevice()">+ Add Device</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortDev('device_num')"># &#8597;</th>
+        <th onclick="sortDev('status')">Status</th>
+        <th>Barcode</th><th>Phone</th>
+        <th onclick="sortDev('library')">Location</th>
+        <th onclick="sortDev('due_date')">Due Date</th>
+        <th onclick="sortDev('due_date')">Days Out</th>
+        <th>Patron</th><th>Contract</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="dev-tbody"></tbody>
+    </table>
+  </div>
+  <div id="dev-empty" class="empty hidden">No devices match this filter.</div>
+</div>
+
+<!-- PATRONS -->
+<div id="section-patrons" class="hidden">
+  <div class="toolbar">
+    <input class="search-box" id="pat-search" placeholder="Search patron ID, email, notes..." oninput="renderPatrons()">
+    <select class="filter" id="pat-filter" onchange="renderPatrons()">
+      <option value="">All Patrons</option>
+      <option value="BLOCKED">Blocked</option>
+      <option value="WARNED">Warned</option>
+      <option value="LATE">Has Late Returns</option>
+      <option value="STAFF">Staff</option>
+    </select>
+    <button class="btn btn-primary" onclick="openAddPatron()">+ Add Patron</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Patron ID</th><th>Email</th><th>Late Returns</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="pat-tbody"></tbody>
+    </table>
+  </div>
+  <div id="pat-empty" class="empty hidden">No patrons match.</div>
+</div>
+
+<!-- LOG -->
+<div id="section-log" class="hidden">
+  <div class="toolbar">
+    <input class="search-box" id="log-search" placeholder="Search log..." oninput="renderLog()">
+    <select class="filter" id="log-type" onchange="renderLog()">
+      <option value="">All Events</option>
+      <option value="checkout">Checkouts</option>
+      <option value="return">Returns</option>
+      <option value="edit">Edits</option>
+      <option value="add">New Records</option>
+      <option value="delete">Deletions</option>
+    </select>
+  </div>
+  <div id="log-container"></div>
+  <div id="log-empty" class="empty hidden">No log entries yet.</div>
+</div>
+
+<!-- IMPORT/EXPORT -->
+<div id="section-io" class="hidden">
+  <h2 style="font-size:16px;margin-bottom:6px;">Import / Export</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.6;">Export pulls live data from the database as a CSV file. Import uses upsert (add new + update existing) for devices and patrons, and appends for history logs.</p>
+  <div class="io-grid">
+    <div class="io-card">
+      <h3>&#128225; Devices</h3>
+      <p>device_num, barcode, imei, last5, phone, status, due_date, under_contract, being_billed, library, patron_id, patron_email, notes</p>
+      <div class="io-btn-row">
+        <button class="btn btn-ghost" onclick="exportData('devices')">&#8595; Export Devices CSV</button>
+        <button class="btn btn-primary" onclick="triggerImport('devices')">&#8593; Import Devices CSV</button>
+        <input type="file" id="imp-devices" accept=".csv,.txt" style="display:none" onchange="importFile('devices',this)">
+      </div>
+      <div class="io-status" id="io-st-devices"></div>
     </div>
-    <div class="content">
-
-      <!-- DEVICES -->
-      <div id="section-devices">
-        <div class="tab-bar">
-          <button class="tab active" onclick="switchDevTab('all',this)">All</button>
-          <button class="tab" onclick="switchDevTab('A',this)">Available</button>
-          <button class="tab" onclick="switchDevTab('C',this)">Checked Out</button>
-          <button class="tab" onclick="switchDevTab('OD',this)">Overdue</button>
-          <button class="tab" onclick="switchDevTab('S',this)">Suspended</button>
-          <button class="tab" onclick="switchDevTab('M',this)">Missing</button>
-          <button class="tab" onclick="switchDevTab('D',this)">Deactivated</button>
-        </div>
-        <div class="toolbar">
-          <input class="search-box" id="dev-search" placeholder="Search device #, barcode, IMEI, phone, patron..." oninput="renderDevices()">
-          <select class="filter" id="dev-lib" onchange="renderDevices()">
-            <option value="">All Libraries</option>
-            <option>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option>
-          </select>
-          <button class="btn btn-primary" onclick="openAddDevice()">＋ Add Device</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th onclick="sortDevices('device_num')">#</th>
-              <th onclick="sortDevices('status')">Status</th>
-              <th>Barcode</th>
-              <th>Phone</th>
-              <th onclick="sortDevices('library')">Library</th>
-              <th onclick="sortDevices('due_date')">Due Date</th>
-              <th>Patron</th>
-              <th>Contract</th>
-              <th>Actions</th>
-            </tr></thead>
-            <tbody id="dev-tbody"></tbody>
-          </table>
-        </div>
-        <div id="dev-empty" class="empty hidden">No devices match.</div>
+    <div class="io-card">
+      <h3>&#128100; Patrons</h3>
+      <p>patron_id, email, blocked, warned, late_count, notes</p>
+      <div class="io-btn-row">
+        <button class="btn btn-ghost" onclick="exportData('patrons')">&#8595; Export Patrons CSV</button>
+        <button class="btn btn-primary" onclick="triggerImport('patrons')">&#8593; Import Patrons CSV</button>
+        <input type="file" id="imp-patrons" accept=".csv,.txt" style="display:none" onchange="importFile('patrons',this)">
       </div>
-
-      <!-- PATRONS -->
-      <div id="section-patrons" class="hidden">
-        <div class="toolbar">
-          <input class="search-box" id="pat-search" placeholder="Search patron ID, email, notes..." oninput="renderPatrons()">
-          <select class="filter" id="pat-filter" onchange="renderPatrons()">
-            <option value="">All Patrons</option>
-            <option value="BLOCKED">Blocked</option>
-            <option value="WARNED">Warned</option>
-            <option value="LATE">Has Late Returns</option>
-            <option value="STAFF">Staff</option>
-          </select>
-          <button class="btn btn-primary" onclick="openAddPatron()">＋ Add Patron</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Patron ID</th><th>Email</th><th>Late Returns</th><th>Status</th><th>Notes</th><th>Actions</th>
-            </tr></thead>
-            <tbody id="pat-tbody"></tbody>
-          </table>
-        </div>
-        <div id="pat-empty" class="empty hidden">No patrons match.</div>
-      </div>
-
-      <!-- LOG -->
-      <div id="section-log" class="hidden">
-        <div class="toolbar">
-          <input class="search-box" id="log-search" placeholder="Search log..." oninput="renderLog()">
-          <select class="filter" id="log-type" onchange="renderLog()">
-            <option value="">All Events</option>
-            <option value="checkout">Checkouts</option>
-            <option value="return">Returns</option>
-            <option value="edit">Edits</option>
-            <option value="add">New Records</option>
-            <option value="delete">Deletions</option>
-          </select>
-        </div>
-        <div id="log-container"></div>
-        <div id="log-empty" class="empty hidden">No log entries yet.</div>
-      </div>
-
+      <div class="io-status" id="io-st-patrons"></div>
     </div>
+    <div class="io-card">
+      <h3>&#128203; History / Log</h3>
+      <p>id, ts, type, msg, created_at</p>
+      <div class="io-btn-row">
+        <button class="btn btn-ghost" onclick="exportData('log')">&#8595; Export History CSV</button>
+        <button class="btn btn-primary" onclick="triggerImport('log')">&#8593; Import History CSV</button>
+        <input type="file" id="imp-log" accept=".csv,.txt" style="display:none" onchange="importFile('log',this)">
+      </div>
+      <div class="io-status" id="io-st-log"></div>
+    </div>
+  </div>
+  <div style="background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:16px;">
+    <p style="font-size:12px;color:var(--muted);line-height:1.8;">
+      <strong style="color:var(--text)">Import notes:</strong> First row must be the header row with exact column names.
+      Devices and Patrons use upsert - existing records with the same ID are updated, new ones are added.
+      History import appends only rows without an id (new entries). After import, data reloads automatically.
+    </p>
   </div>
 </div>
 
-<!-- saving indicator -->
-<div class="saving-indicator" id="saving-indicator">💾 Saving...</div>
+</div><!-- /content -->
+</div><!-- /main-area -->
+</div><!-- /app -->
 
-<!-- ═══ CHECKOUT MODAL ═══ -->
+<div class="toast" id="toast"></div>
+
+<!-- CHECKOUT MODAL -->
 <div class="overlay hidden" id="modal-checkout">
-  <div class="modal">
-    <div class="modal-header"><h2>Check Out MiFi #<span id="co-dev-num"></span></h2><button class="close-btn" onclick="closeModal('checkout')">✕</button></div>
+  <div class="modal modal-sm">
+    <div class="modal-header"><h2>Check Out MiFi #<span id="co-num"></span></h2><button class="close-btn" onclick="closeModal('checkout')">&#10005;</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label>Patron ID</label><input id="co-patron-id" list="patron-dl" placeholder="5-digit ID" oninput="lookupPatron()"><datalist id="patron-dl"></datalist></div>
-        <div class="form-group"><label>Patron Email (auto-filled)</label><input id="co-patron-email" placeholder="Auto-fills from patron list"></div>
-        <div class="form-group"><label>Checkout Date</label><input id="co-checkout-date" type="date"></div>
-        <div class="form-group"><label>Due Date (auto: +21 days)</label><input id="co-due-date" type="date"></div>
-        <div class="form-group full"><label>Notes</label><textarea id="co-notes"></textarea></div>
+        <div class="form-group"><label>Patron ID</label><input id="co-pid" list="co-dl" placeholder="5-digit ID" oninput="lookupP()"><datalist id="co-dl"></datalist></div>
+        <div class="form-group"><label>Patron Email</label><input id="co-email" placeholder="Auto-fills from patron list"></div>
+        <div class="form-group"><label>Checkout Date</label><input id="co-date" type="date"></div>
+        <div class="form-group"><label>Due Date (+21 days)</label><input id="co-due" type="date"></div>
+        <div class="form-group"><label>Location</label>
+          <select id="co-lib"><option>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option></select>
+        </div>
+        <div class="form-group"><label>Notes</label><input id="co-notes" placeholder="Optional"></div>
       </div>
-      <div id="co-patron-info" style="margin-top:10px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);display:none;font-size:13px;"></div>
+      <div id="co-pinfo" style="margin-top:10px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);display:none;font-size:13px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('checkout')">Cancel</button>
-      <button class="btn btn-primary" onclick="doCheckout()">✔ Confirm Checkout</button>
+      <button class="btn btn-primary" onclick="doCheckout()">Confirm Checkout</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ RETURN MODAL ═══ -->
+<!-- RETURN MODAL -->
 <div class="overlay hidden" id="modal-return">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header"><h2>Return MiFi #<span id="ret-dev-num"></span></h2><button class="close-btn" onclick="closeModal('return')">✕</button></div>
+  <div class="modal modal-sm">
+    <div class="modal-header"><h2>Return MiFi #<span id="ret-num"></span></h2><button class="close-btn" onclick="closeModal('return')">&#10005;</button></div>
     <div class="modal-body">
       <div id="ret-info" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.8;"></div>
       <div class="form-grid">
@@ -253,57 +310,60 @@
         <div class="form-group"><label>New Status</label>
           <select id="ret-status"><option value="A">Available</option><option value="D">Deactivated</option><option value="P">Processing</option></select>
         </div>
-        <div class="form-group full"><label>Notes</label><textarea id="ret-notes"></textarea></div>
+        <div class="form-group"><label>Return to Location</label>
+          <select id="ret-lib"><option>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option></select>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="ret-notes"></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('return')">Cancel</button>
-      <button class="btn btn-success" onclick="doReturn()">↩ Confirm Return</button>
+      <button class="btn btn-success" onclick="doReturn()">Confirm Return</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ ADD/EDIT DEVICE MODAL ═══ -->
+<!-- ADD/EDIT DEVICE MODAL -->
 <div class="overlay hidden" id="modal-device">
   <div class="modal">
-    <div class="modal-header"><h2 id="dev-modal-title">Add New Device</h2><button class="close-btn" onclick="closeModal('device')">✕</button></div>
+    <div class="modal-header"><h2 id="dmod-title">Add New Device</h2><button class="close-btn" onclick="closeModal('device')">&#10005;</button></div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group"><label>Device #</label><input id="fd-num"></div>
         <div class="form-group"><label>Barcode</label><input id="fd-barcode" class="mono"></div>
-        <div class="form-group"><label>IMEI</label><input id="fd-imei" class="mono" oninput="autoLast5()"></div>
+        <div class="form-group"><label>IMEI</label><input id="fd-imei" class="mono" oninput="al5()"></div>
         <div class="form-group"><label>Last 5 of IMEI</label><input id="fd-last5" class="mono"></div>
         <div class="form-group"><label>Phone #</label><input id="fd-phone"></div>
         <div class="form-group"><label>Status</label>
           <select id="fd-status">
-            <option value="A">A – Available</option><option value="C">C – Checked Out</option>
-            <option value="S">S – Suspended</option><option value="D">D – Deactivated</option>
-            <option value="M">M – Missing</option><option value="P">P – Processing</option>
+            <option value="A">A - Available</option><option value="C">C - Checked Out</option>
+            <option value="S">S - Suspended</option><option value="D">D - Deactivated</option>
+            <option value="M">M - Missing</option><option value="P">P - Processing</option>
           </select>
         </div>
         <div class="form-group"><label>Due Date</label><input id="fd-due" type="date"></div>
-        <div class="form-group"><label>Library</label>
+        <div class="form-group"><label>Location</label>
           <select id="fd-lib"><option>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option></select>
         </div>
         <div class="form-group"><label>Under Contract</label><select id="fd-contract"><option value="Y">Yes</option><option value="N">No</option></select></div>
         <div class="form-group"><label>Being Billed</label><select id="fd-billed"><option value="Y">Yes</option><option value="N">No</option></select></div>
-        <div class="form-group"><label>Patron ID</label><input id="fd-patron-id"></div>
-        <div class="form-group"><label>Patron Email</label><input id="fd-patron-email"></div>
+        <div class="form-group"><label>Patron ID</label><input id="fd-pid"></div>
+        <div class="form-group"><label>Patron Email</label><input id="fd-pemail"></div>
         <div class="form-group full"><label>Notes</label><textarea id="fd-notes"></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('device')">Cancel</button>
-      <button id="fd-delete-btn" class="btn btn-danger hidden" onclick="deleteDevice()">🗑 Delete</button>
-      <button class="btn btn-primary" onclick="saveDevice()">💾 Save Device</button>
+      <button id="fd-del" class="btn btn-danger hidden" onclick="deleteDev()">Delete Device</button>
+      <button class="btn btn-primary" onclick="saveDev()">Save Device</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ ADD/EDIT PATRON MODAL ═══ -->
+<!-- ADD/EDIT PATRON MODAL -->
 <div class="overlay hidden" id="modal-patron">
-  <div class="modal" style="max-width:520px">
-    <div class="modal-header"><h2 id="pat-modal-title">Add Patron</h2><button class="close-btn" onclick="closeModal('patron')">✕</button></div>
+  <div class="modal modal-sm">
+    <div class="modal-header"><h2 id="pmod-title">Add Patron</h2><button class="close-btn" onclick="closeModal('patron')">&#10005;</button></div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group"><label>Patron ID</label><input id="fp-id"></div>
@@ -316,182 +376,87 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('patron')">Cancel</button>
-      <button id="fp-delete-btn" class="btn btn-danger hidden" onclick="deletePatron()">🗑 Delete</button>
-      <button class="btn btn-primary" onclick="savePatron()">💾 Save Patron</button>
+      <button id="fp-del" class="btn btn-danger hidden" onclick="deletePat()">Delete Patron</button>
+      <button class="btn btn-primary" onclick="savePat()">Save Patron</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ DETAIL MODAL ═══ -->
+<!-- DETAIL MODAL -->
 <div class="overlay hidden" id="modal-detail">
   <div class="modal">
-    <div class="modal-header"><h2>MiFi #<span id="dt-num"></span> — Detail</h2><button class="close-btn" onclick="closeModal('detail')">✕</button></div>
+    <div class="modal-header"><h2>MiFi #<span id="dt-num"></span></h2><button class="close-btn" onclick="closeModal('detail')">&#10005;</button></div>
     <div class="modal-body" id="dt-body"></div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('detail')">Close</button></div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  SUPABASE CONFIG
-// ═══════════════════════════════════════════════════════
-const SB_URL = 'https://drtaotudjjhvuabuvhms.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRydGFvdHVkampodnVhYnV2aG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MjQ1NzgsImV4cCI6MjA5NTAwMDU3OH0.XS-I-8Q8LKQkbeVBSEEKNYdQRcn7WT-KoAfW57EN5kw';
-const HEADERS = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+const SB='https://drtaotudjjhvuabuvhms.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRydGFvdHVkampodnVhYnV2aG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MjQ1NzgsImV4cCI6MjA5NTAwMDU3OH0.XS-I-8Q8LKQkbeVBSEEKNYdQRcn7WT-KoAfW57EN5kw';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK,'Prefer':'return=representation'};
+const LIBS=['COL-HQ','COL-COT','COL-ED','COL-BK'];
 
-async function sbGet(table, params='') {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}&order=id.asc&limit=2000`, {headers:HEADERS});
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function sbInsert(table, obj) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST', headers:HEADERS, body:JSON.stringify(obj)});
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function sbUpdate(table, match, obj) {
-  const params = Object.entries(match).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {method:'PATCH', headers:HEADERS, body:JSON.stringify(obj)});
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function sbDelete(table, match) {
-  const params = Object.entries(match).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {method:'DELETE', headers:{...HEADERS,'Prefer':''}});
-  if (!r.ok) throw new Error(await r.text());
-}
-async function sbUpsert(table, obj, onConflict) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?on_conflict=${onConflict}`, {
-    method:'POST', headers:{...HEADERS,'Prefer':'resolution=merge-duplicates,return=representation'},
-    body:JSON.stringify(obj)
-  });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
+let devices=[],patrons=[],logE=[];
+let devTab='all',devSrt={col:'device_num',dir:1};
 
-// ═══════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════
-let devices = [], patrons = [], logEntries = [];
-let devTabFilter = 'all', devSort = {col:'device_num', dir:1};
+async function sbG(t,p=''){const r=await fetch(`${SB}/rest/v1/${t}?${p}&limit=5000`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbI(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbU(t,m,d){const p=Object.entries(m).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');const r=await fetch(`${SB}/rest/v1/${t}?${p}`,{method:'PATCH',headers:H,body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbD(t,m){const p=Object.entries(m).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');const r=await fetch(`${SB}/rest/v1/${t}?${p}`,{method:'DELETE',headers:{...H,'Prefer':''}});if(!r.ok)throw new Error(await r.text());}
+async function sbUp(t,d,c){const r=await fetch(`${SB}/rest/v1/${t}?on_conflict=${c}`,{method:'POST',headers:{...H,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
 
-// ═══════════════════════════════════════════════════════
-//  SAVING INDICATOR
-// ═══════════════════════════════════════════════════════
-function showSaving(msg='💾 Saving...') {
-  const el = document.getElementById('saving-indicator');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2000);
+function toast(m='Saving...',c='var(--muted)'){const el=document.getElementById('toast');el.textContent=m;el.style.color=c;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+// DATE
+function pd(s){if(!s)return null;const p=s.split('/');if(p.length===3){let y=parseInt(p[2]);if(y<100)y+=2000;return new Date(y,parseInt(p[0])-1,parseInt(p[1]));}return new Date(s);}
+function fd(s){if(!s)return'';const d=pd(s);if(!d||isNaN(d))return s;return(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();}
+function ti(s){if(!s)return'';const d=pd(s);if(!d||isNaN(d))return'';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fi(s){if(!s)return'';const p=s.split('-');return parseInt(p[1])+'/'+parseInt(p[2])+'/'+p[0];}
+function isOD(d){if(!d.due_date||d.status!=='C')return false;const due=pd(d.due_date);if(!due)return false;const t=new Date();t.setHours(0,0,0,0);return due<t;}
+function isDS(d){if(!d.due_date||d.status!=='C')return false;const due=pd(d.due_date);if(!due)return false;const t=new Date();t.setHours(0,0,0,0);const df=(due-t)/86400000;return df>=0&&df<=3;}
+function slbl(s){return{A:'Available',C:'Checked Out',S:'Suspended',D:'Deactivated',M:'Missing',P:'Processing'}[s]||s;}
+
+// INIT
+async function init(){
+  const st=document.getElementById('db-status');
+  st.className='loading';st.textContent='Connecting...';
+  try{
+    [devices,patrons,logE]=await Promise.all([sbG('devices','order=device_num.asc'),sbG('patrons','order=patron_id.asc'),sbG('txlog','order=id.desc&limit=500')]);
+    if(devices.length===0)await seed();
+    st.className='ok';st.textContent='Connected';
+    renderDevices();renderPatrons();renderLog();updateStats();
+  }catch(e){st.className='err';st.textContent='DB Error';alert('Connection failed: '+e.message);}
 }
 
-// ═══════════════════════════════════════════════════════
-//  INIT — load all data from Supabase
-// ═══════════════════════════════════════════════════════
-async function init() {
-  const st = document.getElementById('db-status');
-  st.className = 'loading'; st.textContent = '⏳ Connecting...';
-  try {
-    [devices, patrons, logEntries] = await Promise.all([
-      sbGet('devices'),
-      sbGet('patrons'),
-      sbGet('txlog','order=id.desc&limit=500')
-    ]);
-    // First-ever run: seed the database
-    if (devices.length === 0) await seedDatabase();
-    st.className = 'ok';
-    st.textContent = '✓ Connected';
-    renderDevices();
-    renderPatrons();
-    renderLog();
-    updateStats();
-  } catch(e) {
-    st.className = 'err';
-    st.textContent = '✗ DB Error';
-    console.error(e);
-    alert('Could not connect to database:\n' + e.message);
-  }
+// SEED
+async function seed(){
+  toast('Loading initial data...','var(--yellow)');
+  const ds=[{"device_num":"11","barcode":"3010334137","imei":"990016872908999","last5":"08999","phone":"843.805.2061","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-COT","patron_id":"","patron_email":"","notes":""},{"device_num":"13","barcode":"3010334135","imei":"990016872974850","last5":"74850","phone":"843.805.2091","status":"P","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-COT","patron_id":"","patron_email":"","notes":"Returned in the dropbox at the Cottageville library"},{"device_num":"14","barcode":"3010335084","imei":"990016872917099","last5":"17099","phone":"529.573.6309","status":"D","due_date":"9/10/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63362","patron_email":"constancecreel0473@gmail.com","notes":"Date due 9/6/2025"},{"device_num":"18","barcode":"3010342372","imei":"990016874644964","last5":"44964","phone":"529.730.5004","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-ED","patron_id":"","patron_email":"","notes":""},{"device_num":"19","barcode":"3010334129","imei":"990016872977689","last5":"77689","phone":"843.805.2098","status":"D","due_date":"11/6/25","under_contract":"Y","being_billed":"Y","library":"COL-ED","patron_id":"","patron_email":"","notes":"Screen damaged beyond repair"},{"device_num":"21","barcode":"3010334127","imei":"990016872953581","last5":"53581","phone":"843.805.2060","status":"C","due_date":"6/4/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"55749","patron_email":"NO EMAIL - Alma Dubios","notes":""},{"device_num":"22","barcode":"3010349043","imei":"990016872924152","last5":"24152","phone":"843.805.2177","status":"S","due_date":"5/15/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66596","patron_email":"kaylanicole174@gmail.com","notes":"Date due 5/11/2026"},{"device_num":"26","barcode":"3010334122","imei":"990016872930498","last5":"30498","phone":"843.805.2127","status":"D","due_date":"2/11/2025","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Assumed Lost - Out 251 days"},{"device_num":"33","barcode":"3010334655","imei":"990016872980402","last5":"80402","phone":"843.805.2175","status":"M","due_date":"2/6/2025","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date due 2/7/2024"},{"device_num":"44","barcode":"3010342420","imei":"990016872956105","last5":"56105","phone":"843.805.2092","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-COT","patron_id":"","patron_email":"","notes":"Transfer to Cottageville"},{"device_num":"50","barcode":"3010337672","imei":"990016872977648","last5":"77648","phone":"843.805.2077","status":"C","due_date":"5/27/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"66676","patron_email":"landongrant1975@gmail.com","notes":""},{"device_num":"54","barcode":"3010341760","imei":"990016872926413","last5":"26413","phone":"843.805.2169","status":"C","due_date":"5/25/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"58243","patron_email":"hbishop2012@yahoo.com","notes":""},{"device_num":"55","barcode":"3010341759","imei":"990016872921356","last5":"21356","phone":"843.562.7365","status":"M","due_date":"8/9/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"43792","patron_email":"richardrenerhone@gmail.com","notes":"Date due 8/5/2025"},{"device_num":"60","barcode":"2021062525","imei":"990018920080441","last5":"80441","phone":"843.562.0395","status":"D","due_date":"","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"61","barcode":"2021062524","imei":"990018920084096","last5":"84096","phone":"843.562.0415","status":"D","due_date":"10/2/24","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Returned 10/2/24"},{"device_num":"62","barcode":"3010346561","imei":"990018920078551","last5":"78551","phone":"843.562.0339","status":"D","due_date":"5/7/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"47405","patron_email":"keiashamccorkle@gmail.com","notes":"Damaged beyond repair - DEACTIVATED"},{"device_num":"63","barcode":"2021064590","imei":"990018920084427","last5":"84427","phone":"","status":"D","due_date":"12/15/24","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"DEACTIVATED - Verizon kicked out"},{"device_num":"67","barcode":"2021064594","imei":"990018920039942","last5":"39942","phone":"843.562.0666","status":"M","due_date":"12/3/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66215","patron_email":"briannamikel31@gmail.com","notes":"Date missing 12/3/2024"},{"device_num":"68","barcode":"2021062523","imei":"990018920078882","last5":"78882","phone":"843.562.0634","status":"D","due_date":"5/1/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date missing 5/1/2024"},{"device_num":"69","barcode":"2021062523","imei":"990018920078171","last5":"78171","phone":"843.562.0328","status":"D","due_date":"5/1/2024","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Returned 10/9/25 - Missing cord"},{"device_num":"70","barcode":"2021062522","imei":"990018920083338","last5":"83338","phone":"843.562.0669","status":"C","due_date":"6/8/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67991","patron_email":"ainiya0792@gmail.com","notes":""},{"device_num":"72","barcode":"2021062521","imei":"990018920084237","last5":"84237","phone":"843.562.0637","status":"D","due_date":"7/5/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63675","patron_email":"acechoppa3@gmail.com","notes":"No longer in system"},{"device_num":"73","barcode":"2021062519","imei":"990018920084369","last5":"84369","phone":"843.562.0308","status":"D","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date due 3/8/2024"},{"device_num":"75","barcode":"2021062604","imei":"990018920104811","last5":"04811","phone":"843.562.0665","status":"M","due_date":"3/26/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66287","patron_email":"trhodges7851@gmail.com","notes":"Date missing 10/10/2024"},{"device_num":"78","barcode":"2021063762","imei":"990018920103060","last5":"03060","phone":"843.562.0627","status":"D","due_date":"10/28/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"56777","patron_email":"donnayjdaniels4120@yahoo.com","notes":"Date missing 10/28/2024"},{"device_num":"80","barcode":"2021063772","imei":"990018920077868","last5":"77868","phone":"843.562.0392","status":"S","due_date":"10/21/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65382","patron_email":"lovinzay6@gmail.com","notes":"Date due 10/16/2025"},{"device_num":"82","barcode":"2021063782","imei":"990018920084294","last5":"84294","phone":"843.562.0396","status":"D","due_date":"11/18/2024","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"56092","patron_email":"alfredtaylor@gmail.com","notes":"No longer in the system"},{"device_num":"85","barcode":"2021063797","imei":"990018920018250","last5":"18250","phone":"843.562.0672","status":"C","due_date":"5/19/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67693","patron_email":"NO EMAIL - Reginald Williams 843-908-9216","notes":""},{"device_num":"86","barcode":"2021063800","imei":"990018920021148","last5":"21148","phone":"843.562.0636","status":"M","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date due 2/6/2025"},{"device_num":"87","barcode":"2021063799","imei":"990018920061466","last5":"61466","phone":"843.562.0654","status":"M","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63115","patron_email":"mrscrystalwilliams0711@gmail.com","notes":"Date due 7/3/2024"},{"device_num":"88","barcode":"2021063795","imei":"990018920118159","last5":"18159","phone":"843.562.0683","status":"D","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65389","patron_email":"di300784@gmail.com","notes":"Patron owes $130 - account blocked"},{"device_num":"89","barcode":"2021063798","imei":"990018920118928","last5":"18928","phone":"843.562.0664","status":"M","due_date":"3/26/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65387","patron_email":"kaylastocks996@gmail.com","notes":"Date missing 11/26/2024"},{"device_num":"90","barcode":"2021063794","imei":"990018920102245","last5":"02245","phone":"843.562.0648","status":"M","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63700","patron_email":"catherinegrace2020@gmail.com","notes":"Date due 10/16/2024"},{"device_num":"91","barcode":"2021063793","imei":"990018920108879","last5":"08879","phone":"843.562.0674","status":"S","due_date":"3/20/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66833","patron_email":"thurstonpat673@gmail.com","notes":"Date due 3/17/2026"},{"device_num":"92","barcode":"2021063790","imei":"990018920104787","last5":"04787","phone":"843.562.0655","status":"C","due_date":"5/26/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67857","patron_email":"jmsilhouetteman@gmail.com","notes":""},{"device_num":"93","barcode":"2021063789","imei":"990018920102641","last5":"02641","phone":"843.562.0646","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-ED","patron_id":"","patron_email":"","notes":""},{"device_num":"94","barcode":"2021063788","imei":"990018920102971","last5":"02971","phone":"843.562.0649","status":"C","due_date":"6/5/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68315","patron_email":"bereshadavis27@gmail.com","notes":""},{"device_num":"95","barcode":"3010345380","imei":"990018920073537","last5":"73537","phone":"843.635.2985","status":"C","due_date":"5/21/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"66461","patron_email":"mcgruder121159@yahoo.com","notes":""},{"device_num":"96","barcode":"2021063784","imei":"990018920102625","last5":"02625","phone":"843.562.0657","status":"S","due_date":"10/25/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66516","patron_email":"jenkinslarry430@gmail.com","notes":"Date due 10/22/2025"},{"device_num":"97","barcode":"2021063783","imei":"990018920017682","last5":"17682","phone":"843.562.0629","status":"S","due_date":"4/16/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66778","patron_email":"josheamack882@gmail.com","notes":"Date due 4/13/2026"},{"device_num":"98","barcode":"2021063780","imei":"990018920068990","last5":"68990","phone":"843.562.0673","status":"C","due_date":"6/6/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67918","patron_email":"NO EMAIL - Maurice Aiken 843-510-8300","notes":""},{"device_num":"99","barcode":"2021063779","imei":"990018920104738","last5":"04738","phone":"843.562.0639","status":"S","due_date":"3/31/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66878","patron_email":"komekia75@gmail.com","notes":"Date due 3/27/2026"},{"device_num":"100","barcode":"3010344165","imei":"990016874631318","last5":"31318","phone":"544.934.0844","status":"C","due_date":"5/26/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"60807","patron_email":"patmathis73@gmail.com","notes":""},{"device_num":"101","barcode":"3010344212","imei":"990016874630575","last5":"30575","phone":"521.900.4123","status":"C","due_date":"6/3/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"60502","patron_email":"minosakuma@gmail.com","notes":""},{"device_num":"102","barcode":"3010344188","imei":"990016874644345","last5":"44345","phone":"544.554.5622","status":"D","due_date":"5/6/25","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"65467","patron_email":"marie197039@yahoo.com","notes":"Spilled coffee - DEACTIVATED"},{"device_num":"103","barcode":"3010344200","imei":"990016874645193","last5":"45193","phone":"528.772.4225","status":"C","due_date":"6/4/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"63707","patron_email":"betaaltman@gmail.com","notes":""},{"device_num":"104","barcode":"3010344178","imei":"990016674644121","last5":"44121","phone":"566.687.2070","status":"D","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66229","patron_email":"","notes":"Need Email - No longer in system"},{"device_num":"105","barcode":"3010344164","imei":"990016874630443","last5":"30443","phone":"544.555.5545","status":"M","due_date":"2/25/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"67753","patron_email":"brandellocs@gmail.com","notes":"Date due 2/18/2025"},{"device_num":"106","barcode":"3010344211","imei":"990016874644352","last5":"44352","phone":"529.958.7961","status":"S","due_date":"10/7/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66286","patron_email":"hughesemmual07@gmail.com","notes":"Date due 10/3/2025"},{"device_num":"108","barcode":"3010344210","imei":"990016874645094","last5":"45094","phone":"843.805.2060","status":"C","due_date":"5/27/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"24480","patron_email":"mmurray@gmail.com","notes":"STAFF"},{"device_num":"109","barcode":"2021063798","imei":"990018920118928","last5":"18928","phone":"843.562.0664","status":"D","due_date":"3/26/2025","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"65387","patron_email":"kaylastocks996@gmail.com","notes":"No longer in the system"},{"device_num":"110","barcode":"","imei":"353977572877449","last5":"77449","phone":"577.271.8011","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-BK","patron_id":"","patron_email":"","notes":""},{"device_num":"111","barcode":"3010346998","imei":"990016874645730","last5":"45730","phone":"864.620.1776","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"112","barcode":"3010347997","imei":"990016874645227","last5":"45227","phone":"864.549.5119","status":"S","due_date":"5/7/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66619","patron_email":"brittanydanner64@gmail.com","notes":"Date due 2/1/2026"},{"device_num":"113","barcode":"3010347995","imei":"990016874410283","last5":"10283","phone":"864.549.5914","status":"S","due_date":"3/17/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66672","patron_email":"jossefioritto1881@gmail.com","notes":"Date due 3/13/2026"},{"device_num":"114","barcode":"3010347994","imei":"990016874630468","last5":"30468","phone":"864.549.5838","status":"C","due_date":"6/1/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"58760","patron_email":"e.raysor20@gmail.com","notes":""},{"device_num":"115","barcode":"3010347996","imei":"990016874630567","last5":"30567","phone":"864.549.5400","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"116","barcode":"3010348057","imei":"990016874628801","last5":"28801","phone":"864.549.5945","status":"S","due_date":"11/10/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65726","patron_email":"antonyosimmons52@gmail.com","notes":"Date due 11/7/2025"},{"device_num":"117","barcode":"3010348056","imei":"990016874645219","last5":"45219","phone":"864.378.0070","status":"C","due_date":"5/26/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"58025","patron_email":"magwoodtheresa@gmail.com","notes":""},{"device_num":"118","barcode":"3010348055","imei":"990016874645458","last5":"45458","phone":"864.579.5675","status":"C","due_date":"5/30/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"65986","patron_email":"anya171@hotmail.com","notes":""},{"device_num":"119","barcode":"3010348045","imei":"990016874644295","last5":"44295","phone":"864.828.2550","status":"C","due_date":"6/5/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"38574","patron_email":"jboysmomma@msn.com","notes":""},{"device_num":"120","barcode":"3010348054","imei":"990016874630609","last5":"30609","phone":"864.635.2952","status":"C","due_date":"5/21/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68108","patron_email":"marie197039@yahoo.com","notes":"STAFF"},{"device_num":"121","barcode":"3010348034","imei":"990016874630559","last5":"30559","phone":"864.549.5357","status":"C","due_date":"6/8/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68252","patron_email":"wote_hg@yahoo.com","notes":""},{"device_num":"122","barcode":"3010348022","imei":"990016874630898","last5":"30898","phone":"864.828.0551","status":"P","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"123","barcode":"3010348010","imei":"990016874630831","last5":"30831","phone":"864.378.2859","status":"C","due_date":"6/1/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"66466","patron_email":"allenagibbs.swiftyhands@gmail.com","notes":"WARNED - LATE 3 TIMES"},{"device_num":"124","barcode":"3010348033","imei":"990016874645409","last5":"45409","phone":"864.378.4914","status":"C","due_date":"6/2/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"62084","patron_email":"reedbobby008@gmail.com","notes":"WARNED - LATE 4 TIMES"},{"device_num":"125","barcode":"3010348021","imei":"990016874630658","last5":"30658","phone":"864.549.5204","status":"C","due_date":"6/4/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68255","patron_email":"ebrondsema@aol.com","notes":""},{"device_num":"126","barcode":"3010348009","imei":"990016874630435","last5":"30435","phone":"864.549.5125","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-BK","patron_id":"","patron_email":"","notes":""}];
+  const ps=[{"patron_id":"21009","email":"arlenesaved@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"24480","email":"mmurray@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"26955","email":"audreyr900@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"27070","email":"sarahlfrasier7@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"32023","email":"limehousejalesa@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"32035","email":"sabrinalwjohnson@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"33793","email":"jaquelinajenkins@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"34694","email":"ladyleigh23@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"37882","email":"inacts66@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"38574","email":"jboysmomma@msn.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"41668","email":"mandisegler02@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"42303","email":"xazionwhite1@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"43792","email":"richardrenerhone@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"46120","email":"caleb29488@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"47405","email":"keiashamccorkle@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"47548","email":"180shady@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"49734","email":"terryscriven@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 3/23/26 - LATE 4 TIMES"},{"patron_id":"49813","email":"anya171@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"49814","email":"tamibra589@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"49950","email":"gdbrown57@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"50020","email":"wilsonkevin51@gmail.com","blocked":"Y","warned":"N","late_count":"5","notes":"BLOCKED 12/11/25 - LATE 5 TIMES"},{"patron_id":"50035","email":"andersongrant@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"DIED - LATE 3 TIMES"},{"patron_id":"50262","email":"marie197039@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"51536","email":"careypolk@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"52252","email":"ywilliams1982@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"53039","email":"cemikel843@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"53158","email":"doreenfulks@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"53642","email":"marciav@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"54165","email":"bwnewday@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"54358","email":"bell35898@gmail.com","blocked":"Y","warned":"N","late_count":"5","notes":"BLOCKED 12/8/25 - LATE 5 TIMES"},{"patron_id":"54584","email":"dianacaron@msn.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55035","email":"rose.katelynn94@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55377","email":"courtneygraham2000@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55399","email":"gloriafrederick69@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55632","email":"capt_michael_w_graham@msn.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55749","email":"NO EMAIL - Alma Dubios","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55856","email":"bastonhannah95@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55915","email":"kelli2266@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"56092","email":"alfredtaylor@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"56395","email":"ilove2dance1962@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"56777","email":"donnayj.daniels4120@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"56910","email":"NO EMAIL - Sarah Wright 803-662-0774","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"57116","email":"mattietaylor0814@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58025","email":"magwoodtheresa@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58149","email":"jonathanriccardo@rocketmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58243","email":"hbishop2012@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58338","email":"mizzsassy3k2@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58378","email":"mollyholley1994@gmail.com","blocked":"Y","warned":"N","late_count":"8","notes":"BLOCKED 5/11/26 - LATE 8 TIMES"},{"patron_id":"58760","email":"e.raysor20@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58767","email":"james.davis@colletoncounty.org","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"58949","email":"kayceecatterton@yahoo.com","blocked":"N","warned":"Y","late_count":"3","notes":"WARNED 4/7/26 - LATE 3 TIMES"},{"patron_id":"59223","email":"jimmiejenkins1978@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"59602","email":"angelabaldwin2023@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"59837","email":"kellyhereesimmons2991@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"59876","email":"pamelawhite79@yahoo.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"60323","email":"alexanderwashington329@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60343","email":"williamjohnson29@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60457","email":"lesliemaynard772@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60502","email":"minosakuma@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60529","email":"sheilamcgruder2020@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60531","email":"dejaview@lowcountry.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60613","email":"ajleigh36@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60666","email":"vultepes@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60700","email":"brotherjim7778888@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60707","email":"wcprice9893@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60807","email":"patmathis73@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60977","email":"brelandjoyce902@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61038","email":"tamikaburroughs589@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61119","email":"lorinbobo26@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61150","email":"NO EMAIL - James Grant 843-539-8749","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61237","email":"twhite@colletoncounty.org","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"62084","email":"reedbobby008@gmail.com","blocked":"N","warned":"Y","late_count":"4","notes":"WARNED-12/8/25 - LATE 4 TIMES"},{"patron_id":"62151","email":"flyguy2323@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62186","email":"carolpblock@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62240","email":"harlemone74@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62396","email":"raymondduen6@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62521","email":"lindabrinkley27@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62723","email":"kaycatterton@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62796","email":"brjamison@yahoo.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"62936","email":"truset@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63022","email":"alferguson1977@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63036","email":"murraytenishia@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63115","email":"mrskrystlewilliams0711@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63362","email":"constancecreel0473@gmail.com","blocked":"N","warned":"Y","late_count":"6","notes":"WARNED 4/19/26 - LATE 6 TIMES"},{"patron_id":"63451","email":"sjneal2015@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63481","email":"cheyennelw29@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63669","email":"tatianaferguson23@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63675","email":"acechoppa3@gmail.com","blocked":"Y","warned":"N","late_count":"0","notes":"BLOCKED 12/8/25 - LOST MIFI"},{"patron_id":"63679","email":"ashleybaker@gmail.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"63700","email":"catherinegrace2020@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 12/8/25 - LATE 4 TIMES"},{"patron_id":"63707","email":"betaaltman@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63772","email":"capt_michael_w_graham@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63779","email":"patriciahaynes08@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63780","email":"wyatt74@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63793","email":"calebsmom2313@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63832","email":"4jaxins@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63874","email":"murrayteneshia@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63963","email":"mbethmcrowe66@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64012","email":"jacobchrist1804@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64028","email":"amycreech728@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64059","email":"peggyfrederick39@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64098","email":"ceelobrown87@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64974","email":"sisterkim88@yahoo.com","blocked":"N","warned":"Y","late_count":"4","notes":"WARNED 1/2/26 - LATE 4 TIMES"},{"patron_id":"65035","email":"rose.katelynn94@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65099","email":"keshawnadrian@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65300","email":"sheadley728905@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65337","email":"griz405@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65369","email":"sumerbingley@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65382","email":"lovinzay6@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65387","email":"kaylastocks996@gmail.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"65389","email":"di300784@gmail.com","blocked":"Y","warned":"N","late_count":"3","notes":"BLOCKED 11/10/25 - LATE 3 TIMES - LOST MIFI"},{"patron_id":"65444","email":"jo.west.1220@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"65467","email":"marie197039@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"65487","email":"leahcreel833@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65490","email":"pet.patpatrick54@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65498","email":"ljrich6886@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65511","email":"johnnymiller141@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"65528","email":"jackilyaiken10@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65531","email":"robinbaetz60@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65550","email":"christine25_26@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65603","email":"wyatt74@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65607","email":"gethersmelissa9@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65622","email":"keyanbrown29@gmail.com","blocked":"N","warned":"Y","late_count":"3","notes":"WARNED - LATE 3 TIMES"},{"patron_id":"65691","email":"truset@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65701","email":"NO EMAIL - Lucas Gadson 843-549-8508","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65726","email":"antonyosimmons52@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65763","email":"trellbrown25@gmail.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"65765","email":"NO EMAIL - James Ross 843-908-6684","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65854","email":"ndavis915@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65884","email":"Yahya Peterson","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65926","email":"yvettehaynes62@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65935","email":"kayceecatterton@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"ALSO 58949 - LATE 3 TIMES"},{"patron_id":"65968","email":"miayasnow1974@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65981","email":"scottmcfadden82@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65986","email":"anya171@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66001","email":"mari1947@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66064","email":"walkersharina6@gmail.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"66112","email":"spelljames1956@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66135","email":"jared@ebsc.bank","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66144","email":"murrayisiah2002@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66145","email":"mattietaylor0814@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66154","email":"sheilamcgruder2020@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66207","email":"robertjohnwrightjr@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66215","email":"briannamikel31@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66246","email":"b.anthony@gmail.com","blocked":"N","warned":"Y","late_count":"7","notes":"WARNED - LATE 7 TIMES"},{"patron_id":"66265","email":"audreywalker711@gmail.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"66266","email":"cynthimitchell304@gmail.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"66286","email":"hughesemmual07@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66287","email":"trhodges7851@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66353","email":"annettemitchell151@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66359","email":"alishasanders167@yaho.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66374","email":"snnn-murray2524@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66461","email":"mcgruder121159@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66466","email":"allenagibbs.swiftyhands@gmail.com","blocked":"N","warned":"Y","late_count":"3","notes":"WARNED - LATE 3 TIMES"},{"patron_id":"66516","email":"jenkinslarry430@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66542","email":"jaybaby317232@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66549","email":"braxtonlawson032420@gmail.com","blocked":"Y","warned":"N","late_count":"5","notes":"BLOCKED 11/10/25 - LATE 5 TIMES"},{"patron_id":"66571","email":"rosalynjamison92@outlook.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66596","email":"kaylanicole174@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66619","email":"brittanydanner64@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66657","email":"NO EMAIL - Franklin Davis 843-599-4623","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66658","email":"peg122474@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66672","email":"jossefioritto1881@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66676","email":"landongrant1975@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66684","email":"jamesgrant1992@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66687","email":"charlestim@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66706","email":"rebe@lowcountry.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66778","email":"josheamack882@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66810","email":"hbowen112608@outlook.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66814","email":"terryscriven41@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 3/23/26 - LATE 4 TIMES"},{"patron_id":"66833","email":"thurstonpat673@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66850","email":"jeanettemack4319@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66872","email":"sorereighventures@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66878","email":"komekia75@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67652","email":"pwarren47@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67693","email":"NO EMAIL - Reginald Williams 843-908-9216","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67708","email":"lowcountrywest@proton.me","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67720","email":"mbingley48@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67740","email":"stephen66rhodes@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67753","email":"brandellocs@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67764","email":"ssheffield@colletoncounty.org","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"67779","email":"mariescriven3@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 12/15/25 - LATE 4 TIMES"},{"patron_id":"67857","email":"jmsilhouetteman@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67895","email":"frederickwillie152@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67918","email":"NO EMAIL - Maurice Aiken 843-510-8300","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67948","email":"nisietabjac27@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67983","email":"irielc@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67991","email":"ainiya0792@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68108","email":"marie197039@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"68252","email":"wote1_14@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68255","email":"ebrondsema@aol.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68284","email":"68284","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68288","email":"dorakinsey25@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68315","email":"bereshadavis27@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""}];
+  for(let i=0;i<ds.length;i+=20)await sbI('devices',ds.slice(i,i+20));
+  for(let i=0;i<ps.length;i+=20)await sbI('patrons',ps.slice(i,i+20));
+  devices=await sbG('devices','order=device_num.asc');
+  patrons=await sbG('patrons','order=patron_id.asc');
 }
 
-// ═══════════════════════════════════════════════════════
-//  SEED DATABASE (first run only)
-// ═══════════════════════════════════════════════════════
-async function seedDatabase() {
-  showSaving('⏳ Loading initial data...');
-  const devSeed = [{"device_num":"11","barcode":"3010334137","imei":"990016872908999","last5":"08999","phone":"843.805.2061","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-COT","patron_id":"","patron_email":"","notes":""},{"device_num":"13","barcode":"3010334135","imei":"990016872974850","last5":"74850","phone":"843.805.2091","status":"P","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-COT","patron_id":"","patron_email":"","notes":"Returned in the dropbox at the Cottageville library"},{"device_num":"14","barcode":"3010335084","imei":"990016872917099","last5":"17099","phone":"529.573.6309","status":"D","due_date":"9/10/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63362","patron_email":"constancecreel0473@gmail.com","notes":"Date due 9/6/2025"},{"device_num":"18","barcode":"3010342372","imei":"990016874644964","last5":"44964","phone":"529.730.5004","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-ED","patron_id":"","patron_email":"","notes":""},{"device_num":"19","barcode":"3010334129","imei":"990016872977689","last5":"77689","phone":"843.805.2098","status":"D","due_date":"11/6/25","under_contract":"Y","being_billed":"Y","library":"COL-ED","patron_id":"","patron_email":"","notes":"Edisto - Screen damaged beyond repair"},{"device_num":"21","barcode":"3010334127","imei":"990016872953581","last5":"53581","phone":"843.805.2060","status":"C","due_date":"6/4/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"55749","patron_email":"NO EMAIL - Alma Dubios","notes":""},{"device_num":"22","barcode":"3010349043","imei":"990016872924152","last5":"24152","phone":"843.805.2177","status":"S","due_date":"5/15/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66596","patron_email":"kaylanicole174@gmail.com, kknmiller12011995@gmail.com","notes":"Date due 5/11/2026"},{"device_num":"26","barcode":"3010334122","imei":"990016872930498","last5":"30498","phone":"843.805.2127","status":"D","due_date":"2/11/2025","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Assumed Lost - Out 251 days - Cannot suspend"},{"device_num":"33","barcode":"3010334655","imei":"990016872980402","last5":"80402","phone":"843.805.2175","status":"M","due_date":"2/6/2025","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date due 2/7/2024"},{"device_num":"44","barcode":"3010342420","imei":"990016872956105","last5":"56105","phone":"843.805.2092","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-COT","patron_id":"","patron_email":"","notes":"Transfer to Cottageville"},{"device_num":"50","barcode":"3010337672","imei":"990016872977648","last5":"77648","phone":"843.805.2077","status":"C","due_date":"5/27/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"66676","patron_email":"landongrant1975@gmail.com","notes":""},{"device_num":"54","barcode":"3010341760","imei":"990016872926413","last5":"26413","phone":"843.805.2169","status":"C","due_date":"5/25/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"58243","patron_email":"hbishop2012@yahoo.com","notes":""},{"device_num":"55","barcode":"3010341759","imei":"990016872921356","last5":"21356","phone":"843.562.7365","status":"M","due_date":"8/9/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"43792","patron_email":"richardrenerhone@gmail.com","notes":"Date due 8/5/2025"},{"device_num":"60","barcode":"2021062525","imei":"990018920080441","last5":"80441","phone":"843.562.0395","status":"D","due_date":"","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"61","barcode":"2021062524","imei":"990018920084096","last5":"84096","phone":"843.562.0415","status":"D","due_date":"10/2/24","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Returned 10/2/24 - Was Due 4/2/24 - Suspended"},{"device_num":"62","barcode":"3010346561","imei":"990018920078551","last5":"78551","phone":"843.562.0339","status":"D","due_date":"5/7/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"47405","patron_email":"keiashamccorkle@gmail.com","notes":"Due 3/24/2026 - Damaged beyond repair - DEACTIVATED"},{"device_num":"63","barcode":"2021064590","imei":"990018920084427","last5":"84427","phone":"","status":"D","due_date":"12/15/24","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Lost MIFI - Verizon kicked out of system - DEACTIVATED"},{"device_num":"67","barcode":"2021064594","imei":"990018920039942","last5":"39942","phone":"843.562.0666","status":"M","due_date":"12/3/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66215","patron_email":"briannamikel31@gmail.com","notes":"Date missing 12/3/2024"},{"device_num":"68","barcode":"2021062523","imei":"990018920078882","last5":"78882","phone":"843.562.0634","status":"D","due_date":"5/1/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date missing 5/1/2024"},{"device_num":"69","barcode":"2021062523","imei":"990018920078171","last5":"78171","phone":"843.562.0328","status":"D","due_date":"5/1/2024","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date missing 5/1/2024 - Returned 10/9/25 - Missing cord - Deactivated"},{"device_num":"70","barcode":"2021062522","imei":"990018920083338","last5":"83338","phone":"843.562.0669","status":"C","due_date":"6/8/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67991","patron_email":"ainiya0792@gmail.com","notes":""},{"device_num":"72","barcode":"2021062521","imei":"990018920084237","last5":"84237","phone":"843.562.0637","status":"D","due_date":"7/5/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63675","patron_email":"acechoppa3@gmail.com","notes":"Date due 7/5/2024 - No longer in system"},{"device_num":"73","barcode":"2021062519","imei":"990018920084369","last5":"84369","phone":"843.562.0308","status":"D","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date due 3/8/2024"},{"device_num":"75","barcode":"2021062604","imei":"990018920104811","last5":"04811","phone":"843.562.0665","status":"M","due_date":"3/26/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66287","patron_email":"trhodges7851@gmail.com","notes":"Date missing 10/10/2024"},{"device_num":"78","barcode":"2021063762","imei":"990018920103060","last5":"03060","phone":"843.562.0627","status":"D","due_date":"10/28/2024","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"56777","patron_email":"donnayjdaniels4120@yahoo.com","notes":"Date missing 10/28/2024"},{"device_num":"80","barcode":"2021063772","imei":"990018920077868","last5":"77868","phone":"843.562.0392","status":"S","due_date":"10/21/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65382","patron_email":"lovinzay6@gmail.com","notes":"Date due 10/16/2025"},{"device_num":"82","barcode":"2021063782","imei":"990018920084294","last5":"84294","phone":"843.562.0396","status":"D","due_date":"11/18/2024","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"56092","patron_email":"alfredtaylor@gmail.com","notes":"Date due 11/12/2024 - No longer in the system"},{"device_num":"85","barcode":"2021063797","imei":"990018920018250","last5":"18250","phone":"843.562.0672","status":"C","due_date":"5/19/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67693","patron_email":"Reginald Williams - NO EMAIL - 843-908-9216","notes":""},{"device_num":"86","barcode":"2021063800","imei":"990018920021148","last5":"21148","phone":"843.562.0636","status":"M","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"","patron_email":"","notes":"Date due 2/6/2025"},{"device_num":"87","barcode":"2021063799","imei":"990018920061466","last5":"61466","phone":"843.562.0654","status":"M","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63115","patron_email":"mrscrystalwilliams0711@gmail.com","notes":"Date due 7/3/2024"},{"device_num":"88","barcode":"2021063795","imei":"990018920118159","last5":"18159","phone":"843.562.0683","status":"D","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65389","patron_email":"di300784@gmail.com","notes":"Patron owes $130 - account blocked - Date due 10/24/2024"},{"device_num":"89","barcode":"2021063798","imei":"990018920118928","last5":"18928","phone":"843.562.0664","status":"M","due_date":"3/26/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65387","patron_email":"kaylastocks996@gmail.com","notes":"Date missing 11/26/2024"},{"device_num":"90","barcode":"2021063794","imei":"990018920102245","last5":"02245","phone":"843.562.0648","status":"M","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"63700","patron_email":"catherinegrace2020@gmail.com","notes":"Date due 10/16/2024"},{"device_num":"91","barcode":"2021063793","imei":"990018920108879","last5":"08879","phone":"843.562.0674","status":"S","due_date":"3/20/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66833","patron_email":"thurstonpat673@gmail.com","notes":"Date due 3/17/2026"},{"device_num":"92","barcode":"2021063790","imei":"990018920104787","last5":"04787","phone":"843.562.0655","status":"C","due_date":"5/26/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67857","patron_email":"jmsilhouetteman@gmail.com","notes":""},{"device_num":"93","barcode":"2021063789","imei":"990018920102641","last5":"02641","phone":"843.562.0646","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-ED","patron_id":"","patron_email":"","notes":""},{"device_num":"94","barcode":"2021063788","imei":"990018920102971","last5":"02971","phone":"843.562.0649","status":"C","due_date":"6/5/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68315","patron_email":"bereshadavis27@gmail.com","notes":""},{"device_num":"95","barcode":"3010345380","imei":"990018920073537","last5":"73537","phone":"843.635.2985","status":"C","due_date":"5/21/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"66461","patron_email":"mcgruder121159@yahoo.com","notes":""},{"device_num":"96","barcode":"2021063784","imei":"990018920102625","last5":"02625","phone":"843.562.0657","status":"S","due_date":"10/25/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66516","patron_email":"jenkinslarry430@gmail.com","notes":"Date due 10/22/2025"},{"device_num":"97","barcode":"2021063783","imei":"990018920017682","last5":"17682","phone":"843.562.0629","status":"S","due_date":"4/16/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66778","patron_email":"josheamack882@gmail.com","notes":"Date due 4/13/2026"},{"device_num":"98","barcode":"2021063780","imei":"990018920068990","last5":"68990","phone":"843.562.0673","status":"C","due_date":"6/6/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"67918","patron_email":"NO EMAIL - Maurice Aiken - 843-510-8300","notes":""},{"device_num":"99","barcode":"2021063779","imei":"990018920104738","last5":"04738","phone":"843.562.0639","status":"S","due_date":"3/31/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66878","patron_email":"komekia75@gmail.com","notes":"Date due 3/27/2026"},{"device_num":"100","barcode":"3010344165","imei":"990016874631318","last5":"31318","phone":"544.934.0844","status":"C","due_date":"5/26/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"60807","patron_email":"patmathis73@gmail.com, patriciahaynes08@yahoo.com","notes":""},{"device_num":"101","barcode":"3010344212","imei":"990016874630575","last5":"30575","phone":"521.900.4123","status":"C","due_date":"6/3/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"60502","patron_email":"minosakuma@gmail.com","notes":""},{"device_num":"102","barcode":"3010344188","imei":"990016874644345","last5":"44345","phone":"544.554.5622","status":"D","due_date":"5/6/25","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"65467","patron_email":"marie197039@yahoo.com","notes":"Spilled coffee - DEACTIVATED - Charged $100"},{"device_num":"103","barcode":"3010344200","imei":"990016874645193","last5":"45193","phone":"528.772.4225","status":"C","due_date":"6/4/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"63707","patron_email":"betaaltman@gmail.com","notes":""},{"device_num":"104","barcode":"3010344178","imei":"990016674644121","last5":"44121","phone":"566.687.2070","status":"D","due_date":"2/6/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66229","patron_email":"","notes":"843-542-4227 - Need Email - No longer in system"},{"device_num":"105","barcode":"3010344164","imei":"990016874630443","last5":"30443","phone":"544.555.5545","status":"M","due_date":"2/25/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"67753","patron_email":"brandellocs@gmail.com","notes":"Date due 2/18/2025"},{"device_num":"106","barcode":"3010344211","imei":"990016874644352","last5":"44352","phone":"529.958.7961","status":"S","due_date":"10/7/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66286","patron_email":"hughesemmual07@gmail.com","notes":"Date due 10/3/2025"},{"device_num":"108","barcode":"3010344210","imei":"990016874645094","last5":"45094","phone":"843.805.2060","status":"C","due_date":"5/27/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"24480","patron_email":"mmurray@gmail.com","notes":"STAFF"},{"device_num":"109","barcode":"2021063798","imei":"990018920118928","last5":"18928","phone":"843.562.0664","status":"D","due_date":"3/26/2025","under_contract":"N","being_billed":"N","library":"COL-HQ","patron_id":"65387","patron_email":"kaylastocks996@gmail.com","notes":"No longer in the system"},{"device_num":"110","barcode":"","imei":"353977572877449","last5":"77449","phone":"577.271.8011","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-BK","patron_id":"","patron_email":"","notes":""},{"device_num":"111","barcode":"3010346998","imei":"990016874645730","last5":"45730","phone":"864.620.1776","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"112","barcode":"3010347997","imei":"990016874645227","last5":"45227","phone":"864.549.5119","status":"S","due_date":"5/7/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66619","patron_email":"brittanydanner64@gmail.com","notes":"Date due 2/1/2026"},{"device_num":"113","barcode":"3010347995","imei":"990016874410283","last5":"10283","phone":"864.549.5914","status":"S","due_date":"3/17/2026","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"66672","patron_email":"jossefioritto1881@gmail.com","notes":"Date due 3/13/2026"},{"device_num":"114","barcode":"3010347994","imei":"990016874630468","last5":"30468","phone":"864.549.5838","status":"C","due_date":"6/1/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"58760","patron_email":"e.raysor20@gmail.com","notes":""},{"device_num":"115","barcode":"3010347996","imei":"990016874630567","last5":"30567","phone":"864.549.5400","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"116","barcode":"3010348057","imei":"990016874628801","last5":"28801","phone":"864.549.5945","status":"S","due_date":"11/10/2025","under_contract":"Y","being_billed":"N","library":"COL-HQ","patron_id":"65726","patron_email":"antonyosimmons52@gmail.com","notes":"Date due 11/7/2025"},{"device_num":"117","barcode":"3010348056","imei":"990016874645219","last5":"45219","phone":"864.378.0070","status":"C","due_date":"5/26/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"58025","patron_email":"magwoodtheresa@gmail.com","notes":""},{"device_num":"118","barcode":"3010348055","imei":"990016874645458","last5":"45458","phone":"864.579.5675","status":"C","due_date":"5/30/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"65986","patron_email":"anya171@hotmail.com","notes":""},{"device_num":"119","barcode":"3010348045","imei":"990016874644295","last5":"44295","phone":"864.828.2550","status":"C","due_date":"6/5/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"38574","patron_email":"jboysmomma@msn.com","notes":""},{"device_num":"120","barcode":"3010348054","imei":"990016874630609","last5":"30609","phone":"864.635.2952","status":"C","due_date":"5/21/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68108","patron_email":"marie197039@yahoo.com","notes":"STAFF"},{"device_num":"121","barcode":"3010348034","imei":"990016874630559","last5":"30559","phone":"864.549.5357","status":"C","due_date":"6/8/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68252","patron_email":"wote_hg@yahoo.com","notes":""},{"device_num":"122","barcode":"3010348022","imei":"990016874630898","last5":"30898","phone":"864.828.0551","status":"P","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"","patron_email":"","notes":""},{"device_num":"123","barcode":"3010348010","imei":"990016874630831","last5":"30831","phone":"864.378.2859","status":"C","due_date":"6/1/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"66466","patron_email":"allenagibbs.swiftyhands@gmail.com","notes":"WARNED - LATE 3 TIMES"},{"device_num":"124","barcode":"3010348033","imei":"990016874645409","last5":"45409","phone":"864.378.4914","status":"C","due_date":"6/2/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"62084","patron_email":"reedbobby008@gmail.com","notes":"WARNED - LATE 4 TIMES"},{"device_num":"125","barcode":"3010348021","imei":"990016874630658","last5":"30658","phone":"864.549.5204","status":"C","due_date":"6/4/2026","under_contract":"Y","being_billed":"Y","library":"COL-HQ","patron_id":"68255","patron_email":"ebrondsema@aol.com","notes":""},{"device_num":"126","barcode":"3010348009","imei":"990016874630435","last5":"30435","phone":"864.549.5125","status":"A","due_date":"","under_contract":"Y","being_billed":"Y","library":"COL-BK","patron_id":"","patron_email":"","notes":""}];
-  const patSeed = [{"patron_id":"21009","email":"arlenesaved@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"24480","email":"mmurray@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"26955","email":"audreyr900@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"27070","email":"sarahlfrasier7@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"32023","email":"limehousejalesa@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"32035","email":"sabrinalwjohnson@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"33793","email":"jaquelinajenkins@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"34694","email":"ladyleigh23@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"37882","email":"inacts66@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"38574","email":"jboysmomma@msn.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"41668","email":"mandisegler02@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"42303","email":"xazionwhite1@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"43792","email":"richardrenerhone@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"46120","email":"caleb29488@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"47405","email":"keiashamccorkle@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"47548","email":"180shady@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"49734","email":"terryscriven@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 3/23/26 - LATE 4 TIMES"},{"patron_id":"49813","email":"anya171@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"49814","email":"tamibra589@gmail.com, bryantscriven85@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"49950","email":"gdbrown57@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"50020","email":"wilsonkevin51@gmail.com","blocked":"Y","warned":"N","late_count":"5","notes":"BLOCKED 12/11/25 - LATE 5 TIMES"},{"patron_id":"50035","email":"andersongrant@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"DIED - LATE 3 TIMES"},{"patron_id":"50262","email":"marie197039@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"51536","email":"careypolk@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"52252","email":"ywilliams1982@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"53039","email":"cemikel843@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"53158","email":"doreenfulks@gmail.com, fulksdoreen81@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"53642","email":"marciav@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"54165","email":"bwnewday@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"54358","email":"bell35898@gmail.com","blocked":"Y","warned":"N","late_count":"5","notes":"BLOCKED 12/8/25 - LATE 5 TIMES"},{"patron_id":"54584","email":"dianacaron@msn.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55035","email":"rose.katelynn94@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55377","email":"courtneygraham2000@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55399","email":"gloriafrederick69@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55632","email":"capt_michael_w_graham@msn.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55749","email":"NO EMAIL - Alma Dubios","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55856","email":"bastonhannah95@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"55915","email":"kelli2266@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"56092","email":"alfredtaylor@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"56395","email":"ilove2dance1962@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"56777","email":"donnayj.daniels4120@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"56910","email":"Sarah Wright - NO EMAIL - 803-662-0774","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"57116","email":"mattietaylor0814@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58025","email":"magwoodtheresa@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58149","email":"jonathanriccardo@rocketmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58243","email":"hbishop2012@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58338","email":"mizzsassy3k2@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58378","email":"mollyholley1994@gmail.com","blocked":"Y","warned":"N","late_count":"8","notes":"BLOCKED 5/11/26 - LATE 8 TIMES"},{"patron_id":"58760","email":"e.raysor20@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"58767","email":"james.davis@colletoncounty.org","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"58949","email":"kayceecatterton@yahoo.com","blocked":"N","warned":"Y","late_count":"3","notes":"WARNED 4/7/26 - LATE 3 TIMES"},{"patron_id":"59223","email":"jimmiejenkins1978@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"59602","email":"angelabaldwin2023@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"59837","email":"kellyhereesimmons2991@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"59876","email":"pamelawhite79@yahoo.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"60323","email":"alexanderwashington329@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60343","email":"williamjohnson29@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60457","email":"lesliemaynard772@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60502","email":"minosakuma@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60529","email":"sheilamcgruder2020@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60531","email":"dejaview@lowcountry.com, janiceblocker@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60613","email":"ajleigh36@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60666","email":"vultepes@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60700","email":"brotherjim7778888@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60707","email":"wcprice9893@gmail.com, wcprice98936@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60807","email":"patmathis73@gmail.com, patriciahaynes08@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"60977","email":"brelandjoyce902@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61038","email":"tamikaburroughs589@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61119","email":"lorinbobo26@gmail.com, lorijones25000@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61150","email":"James Grant - NO EMAIL - 843-539-8749","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"61237","email":"twhite@colletoncounty.org","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"62084","email":"reedbobby008@gmail.com","blocked":"N","warned":"Y","late_count":"4","notes":"WARNED-12/8/25 - LATE 4 TIMES"},{"patron_id":"62151","email":"flyguy2323@gmail.com, treylamarglover@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62186","email":"carolpblock@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62240","email":"harlemone74@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62396","email":"raymondduen6@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62521","email":"lindabrinkley27@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62723","email":"kaycatterton@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"62796","email":"brjamison@yahoo.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"62936","email":"truset@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63022","email":"alferguson1977@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63036","email":"murraytenishia@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63115","email":"mrskrystlewilliams0711@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63362","email":"constancecreel0473@gmail.com","blocked":"N","warned":"Y","late_count":"6","notes":"WARNED 4/19/26 - LATE 6 TIMES"},{"patron_id":"63451","email":"sjneal2015@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63481","email":"cheyennelw29@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63669","email":"tatianaferguson23@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63675","email":"acechoppa3@gmail.com","blocked":"Y","warned":"N","late_count":"0","notes":"BLOCKED 12/8/25 - LOST MIFI"},{"patron_id":"63679","email":"ashleybaker@gmail.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"63700","email":"catherinegrace2020@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 12/8/25 - LATE 4 TIMES"},{"patron_id":"63707","email":"betaaltman@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63772","email":"capt_michael_w_graham@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63779","email":"patriciahaynes08@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63780","email":"wyatt74@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63793","email":"calebsmom2313@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63832","email":"4jaxins@gmail.com, amyellenboone@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63874","email":"murrayteneshia@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"63963","email":"mbethmcrowe66@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64012","email":"jacobchrist1804@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64028","email":"amycreech728@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64059","email":"peggyfrederick39@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64098","email":"ceelobrown87@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"64974","email":"sisterkim88@yahoo.com","blocked":"N","warned":"Y","late_count":"4","notes":"WARNED 1/2/26 - LATE 4 TIMES"},{"patron_id":"65035","email":"rose.katelynn94@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65099","email":"keshawnadrian@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65300","email":"sheadley728905@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65337","email":"griz405@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65369","email":"sumerbingley@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65382","email":"lovinzay6@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65387","email":"kaylastocks996@gmail.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"65389","email":"di300784@gmail.com","blocked":"Y","warned":"N","late_count":"3","notes":"BLOCKED 11/10/25 - LATE 3 TIMES - LOST MIFI"},{"patron_id":"65444","email":"jo.west.1220@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"65467","email":"marie197039@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"65487","email":"leahcreel833@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65490","email":"pet.patpatrick54@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65498","email":"ljrich6886@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65511","email":"johnnymiller141@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"65528","email":"jackilyaiken10@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65531","email":"robinbaetz60@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65550","email":"christine25_26@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65603","email":"wyatt74@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65607","email":"gethersmelissa9@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65622","email":"keyanbrown29@gmail.com","blocked":"N","warned":"Y","late_count":"3","notes":"WARNED - LATE 3 TIMES"},{"patron_id":"65691","email":"truset@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65701","email":"Lucas Gadson - NO EMAIL - 843-549-8508","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65726","email":"antonyosimmons52@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65763","email":"trellbrown25@gmail.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"65765","email":"James Ross - NO EMAIL - 843-908-6684","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65854","email":"ndavis915@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65884","email":"Yahya Peterson","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65926","email":"yvettehaynes62@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65935","email":"kayceecatterton@yahoo.com","blocked":"N","warned":"N","late_count":"3","notes":"ALSO 58949 - LATE 3 TIMES"},{"patron_id":"65968","email":"miayasnow1974@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65981","email":"scottmcfadden82@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"65986","email":"anya171@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66001","email":"mari1947@hotmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66064","email":"walkersharina6@gmail.com","blocked":"N","warned":"N","late_count":"3","notes":"LATE 3 TIMES"},{"patron_id":"66112","email":"spelljames1956@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66135","email":"jared@ebsc.bank","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66144","email":"murrayisiah2002@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66145","email":"mattietaylor0814@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66154","email":"sheilamcgruder2020@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66207","email":"robertjohnwrightjr@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66215","email":"briannamikel31@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66246","email":"b.anthony@gmail.com, bethany1978@gmail.com","blocked":"N","warned":"Y","late_count":"7","notes":"WARNED - LATE 7 TIMES"},{"patron_id":"66265","email":"audreywalker711@gmail.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"66266","email":"cynthimitchell304@gmail.com, sheila304@gmail.com","blocked":"N","warned":"N","late_count":"4","notes":"LATE 4 TIMES"},{"patron_id":"66286","email":"hughesemmual07@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66287","email":"trhodges7851@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66353","email":"annettemitchell151@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66359","email":"alishasanders167@yaho.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66374","email":"snnn-murray2524@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66461","email":"mcgruder121159@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66466","email":"allenagibbs.swiftyhands@gmail.com","blocked":"N","warned":"Y","late_count":"3","notes":"WARNED - LATE 3 TIMES"},{"patron_id":"66516","email":"jenkinslarry430@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66542","email":"jaybaby317232@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66549","email":"braxtonlawson032420@gmail.com","blocked":"Y","warned":"N","late_count":"5","notes":"BLOCKED 11/10/25 - LATE 5 TIMES"},{"patron_id":"66571","email":"rosalynjamison92@outlook.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66596","email":"kaylanicole174@gmail.com, kknmiller12011995@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66619","email":"brittanydanner64@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66657","email":"Franklin Davis - NO EMAIL - 843-599-4623","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66658","email":"peg122474@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66672","email":"jossefioritto1881@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66676","email":"landongrant1975@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66684","email":"jamesgrant1992@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66687","email":"charlestim@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66706","email":"rebe@lowcountry.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66778","email":"josheamack882@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66810","email":"hbowen112608@outlook.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66814","email":"terryscriven41@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 3/23/26 - LATE 4 TIMES"},{"patron_id":"66833","email":"thurstonpat673@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66850","email":"jeanettemack4319@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66872","email":"sorereighventures@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"66878","email":"komekia75@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67652","email":"pwarren47@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67693","email":"Reginald Williams - NO EMAIL - 843-908-9216","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67708","email":"lowcountrywest@proton.me","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67720","email":"mbingley48@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67740","email":"stephen66rhodes@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67753","email":"brandellocs@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67764","email":"ssheffield@colletoncounty.org","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"67779","email":"mariescriven3@gmail.com","blocked":"Y","warned":"N","late_count":"4","notes":"BLOCKED 12/15/25 - LATE 4 TIMES"},{"patron_id":"67857","email":"jmsilhouetteman@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67895","email":"frederickwillie152@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67918","email":"NO EMAIL - Maurice Aiken - 843-510-8300","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67948","email":"nisietabjac27@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67983","email":"irielc@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"67991","email":"ainiya0792@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68108","email":"marie197039@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":"STAFF"},{"patron_id":"68252","email":"wote1_14@yahoo.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68255","email":"ebrondsema@aol.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68284","email":"68284","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68288","email":"dorakinsey25@icloud.com","blocked":"N","warned":"N","late_count":"0","notes":""},{"patron_id":"68315","email":"bereshadavis27@gmail.com","blocked":"N","warned":"N","late_count":"0","notes":""}];
-  // Insert in batches of 20
-  for (let i=0; i<devSeed.length; i+=20) await sbInsert('devices', devSeed.slice(i,i+20));
-  for (let i=0; i<patSeed.length; i+=20) await sbInsert('patrons', patSeed.slice(i,i+20));
-  devices = await sbGet('devices');
-  patrons = await sbGet('patrons');
-  showSaving('✓ Initial data loaded!');
+// LOG
+async function addLog(type,msg){
+  const now=new Date();
+  const ts=now.toLocaleDateString('en-US')+' '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  try{const r=await sbI('txlog',{ts,type,msg});logE.unshift(Array.isArray(r)?r[0]:r);}catch(e){}
 }
 
-// ═══════════════════════════════════════════════════════
-//  LOG
-// ═══════════════════════════════════════════════════════
-async function addLog(type, msg) {
-  const now = new Date();
-  const ts = now.toLocaleDateString('en-US') + ' ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  const entry = {ts, type, msg};
-  try { await sbInsert('txlog', entry); logEntries.unshift({...entry}); } catch(e){}
-}
-
-// ═══════════════════════════════════════════════════════
-//  DATE HELPERS
-// ═══════════════════════════════════════════════════════
-function parseDate(s) {
-  if (!s) return null;
-  const p = s.split('/');
-  if (p.length===3) { let y=parseInt(p[2]); if(y<100)y+=2000; return new Date(y,parseInt(p[0])-1,parseInt(p[1])); }
-  return new Date(s);
-}
-function fmtDate(s) {
-  if (!s) return '';
-  const d = parseDate(s);
-  if (!d||isNaN(d)) return s;
-  return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();
-}
-function toInput(s) {
-  if (!s) return '';
-  const d = parseDate(s);
-  if (!d||isNaN(d)) return '';
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function fromInput(s) {
-  if (!s) return '';
-  const p = s.split('-');
-  return parseInt(p[1])+'/'+parseInt(p[2])+'/'+p[0];
-}
-function isOverdue(d) {
-  if (!d.due_date || d.status !== 'C') return false;
-  const due = parseDate(d.due_date); if (!due) return false;
-  const today = new Date(); today.setHours(0,0,0,0);
-  return due < today;
-}
-function isDueSoon(d) {
-  if (!d.due_date || d.status !== 'C') return false;
-  const due = parseDate(d.due_date); if (!due) return false;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const diff = (due-today)/86400000;
-  return diff>=0 && diff<=3;
-}
-function statusLabel(s) {
-  return {A:'Available',C:'Checked Out',S:'Suspended',D:'Deactivated',M:'Missing',P:'Processing'}[s]||s;
-}
-
-// ═══════════════════════════════════════════════════════
-//  STATS
-// ═══════════════════════════════════════════════════════
-function updateStats() {
+// STATS + LOCATION BREAKDOWN
+function updateStats(){
   let A=0,C=0,S=0,D=0,M=0,OD=0;
-  for (const d of devices) {
-    if (d.status==='A') A++;
-    else if (d.status==='C') { C++; if(isOverdue(d)) OD++; }
-    else if (d.status==='S') S++;
-    else if (d.status==='D') D++;
-    else if (d.status==='M') M++;
+  const lc={};LIBS.forEach(l=>lc[l]=0);
+  for(const d of devices){
+    if(d.status==='A'){A++;if(lc[d.library]!==undefined)lc[d.library]++;}
+    else if(d.status==='C'){C++;if(isOD(d))OD++;}
+    else if(d.status==='S')S++;
+    else if(d.status==='D')D++;
+    else if(d.status==='M')M++;
   }
   document.getElementById('stat-A').textContent=A;
   document.getElementById('stat-C').textContent=C;
@@ -499,406 +464,361 @@ function updateStats() {
   document.getElementById('stat-S').textContent=S;
   document.getElementById('stat-M').textContent=M;
   document.getElementById('stat-D').textContent=D;
+  const curLib=document.getElementById('dev-lib').value;
+  document.getElementById('loc-breakdown').innerHTML=LIBS.map(l=>`<div class="loc-row ${curLib===l?'active-loc':''}" onclick="filterLoc('${l}')"><span class="loc-name">${l}</span><span class="loc-count">${lc[l]}</span></div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════════════════════
-function showSection(name) {
-  ['devices','patrons','log'].forEach(s => {
-    document.getElementById('section-'+s).classList.toggle('hidden', s!==name);
-  });
-  document.querySelectorAll('header nav button').forEach((b,i)=>{
-    b.classList.toggle('active',['devices','patrons','log'][i]===name);
-  });
-}
-function switchDevTab(filter, btn) {
-  devTabFilter = filter;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderDevices();
-}
-function sortDevices(col) {
-  if (devSort.col===col) devSort.dir*=-1; else {devSort.col=col;devSort.dir=1;}
-  renderDevices();
+function filterLoc(lib){document.getElementById('dev-lib').value=lib;setFilter('A',lib);}
+function setFilter(filter,lib){
+  document.getElementById('dev-lib').value=lib;
+  devTab=filter;
+  document.querySelectorAll('#dev-tabs .tab').forEach(t=>{const f=t.getAttribute('onclick').match(/'([^']+)'/)?.[1];t.classList.toggle('active',f===filter);});
+  showSection('devices');renderDevices();
 }
 
-// ═══════════════════════════════════════════════════════
-//  RENDER DEVICES
-// ═══════════════════════════════════════════════════════
-function renderDevices() {
-  const q = document.getElementById('dev-search').value.toLowerCase();
-  const lib = document.getElementById('dev-lib').value;
-  let list = devices.filter(d => {
-    const matchQ = !q || [d.device_num,d.barcode,d.imei,d.phone,d.patron_id,d.patron_email,d.notes].some(v=>(v||'').toLowerCase().includes(q));
-    const matchL = !lib || d.library===lib;
-    let matchT = true;
-    if (devTabFilter==='OD') matchT = isOverdue(d);
-    else if (devTabFilter!=='all') matchT = d.status===devTabFilter;
-    return matchQ && matchL && matchT;
+// NAVIGATION
+function showSection(n){['devices','patrons','log','io'].forEach(s=>document.getElementById('section-'+s).classList.toggle('hidden',s!==n));document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',['devices','patrons','log','io'][i]===n));}
+function switchTab(f,btn){devTab=f;document.querySelectorAll('#dev-tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderDevices();}
+function sortDev(col){if(devSrt.col===col)devSrt.dir*=-1;else{devSrt.col=col;devSrt.dir=1;}renderDevices();}
+
+// RENDER DEVICES — grouped by location when Available tab and no location filter
+function renderDevices(){
+  const q=document.getElementById('dev-search').value.toLowerCase();
+  const lib=document.getElementById('dev-lib').value;
+  let list=devices.filter(d=>{
+    const mQ=!q||[d.device_num,d.barcode,d.imei,d.phone,d.patron_id,d.patron_email,d.notes].some(v=>(v||'').toLowerCase().includes(q));
+    const mL=!lib||d.library===lib;
+    let mT=true;
+    if(devTab==='OD')mT=isOD(d);
+    else if(devTab!=='all')mT=d.status===devTab;
+    return mQ&&mL&&mT;
   });
-  list.sort((a,b)=>{
-    let av=(a[devSort.col]||''), bv=(b[devSort.col]||'');
-    if (devSort.col==='device_num'){av=parseInt(av)||0;bv=parseInt(bv)||0;}
-    return av<bv?-devSort.dir:av>bv?devSort.dir:0;
-  });
-  const tbody = document.getElementById('dev-tbody');
+  list.sort((a,b)=>{let av=a[devSrt.col]||'',bv=b[devSrt.col]||'';if(devSrt.col==='device_num'){av=parseInt(av)||0;bv=parseInt(bv)||0;}return av<bv?-devSrt.dir:av>bv?devSrt.dir:0;});
+  const tbody=document.getElementById('dev-tbody');
   tbody.innerHTML='';
-  document.getElementById('dev-empty').classList.toggle('hidden', list.length>0);
-  for (const d of list) {
-    const od=isOverdue(d), soon=isDueSoon(d);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td><strong class="mono">#${d.device_num}</strong></td>
-      <td><span class="badge badge-${d.status}">${statusLabel(d.status)}</span></td>
-      <td class="mono">${d.barcode||'—'}</td>
-      <td class="mono">${d.phone||'—'}</td>
-      <td><code style="font-size:11px;color:var(--cyan)">${d.library||''}</code></td>
-      <td class="${od?'overdue':soon?'due-soon':''}">${fmtDate(d.due_date)||'—'}</td>
-      <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'—'}</td>
-      <td>${d.under_contract==='Y'?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">No</span>'}</td>
-      <td>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;">
-          <button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="openDetail('${d.device_num}')">🔍</button>
-          ${d.status==='A'||d.status==='P'?`<button class="btn btn-primary" style="padding:3px 8px;font-size:11px" onclick="openCheckout('${d.device_num}')">Out</button>`:''}
-          ${d.status==='C'?`<button class="btn btn-success" style="padding:3px 8px;font-size:11px" onclick="openReturn('${d.device_num}')">Return</button>`:''}
-          <button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="openEditDevice('${d.device_num}')">✏</button>
-        </div>
-      </td>`;
-    tbody.appendChild(tr);
-  }
+  document.getElementById('dev-empty').classList.toggle('hidden',list.length>0);
+  const grpByLoc=devTab==='A'&&!lib;
+  if(grpByLoc){
+    const grp={};LIBS.forEach(l=>grp[l]=[]);
+    list.forEach(d=>{if(grp[d.library])grp[d.library].push(d);else{if(!grp['Other'])grp['Other']=[];grp['Other'].push(d);}});
+    [...LIBS,'Other'].forEach(l=>{
+      if(!grp[l]||grp[l].length===0)return;
+      const hdr=document.createElement('tr');hdr.className='loc-header';
+      hdr.innerHTML=`<td colspan="10">&#128205; ${l} &mdash; ${grp[l].length} available</td>`;
+      tbody.appendChild(hdr);
+      grp[l].forEach(d=>tbody.appendChild(mkRow(d)));
+    });
+  }else{list.forEach(d=>tbody.appendChild(mkRow(d)));}
   updateStats();
 }
 
-// ═══════════════════════════════════════════════════════
-//  RENDER PATRONS
-// ═══════════════════════════════════════════════════════
-function renderPatrons() {
-  const q = document.getElementById('pat-search').value.toLowerCase();
-  const f = document.getElementById('pat-filter').value.toUpperCase();
-  let list = patrons.filter(p => {
-    const matchQ = !q||[p.patron_id,p.email,p.notes].some(v=>(v||'').toLowerCase().includes(q));
-    let matchF = true;
-    if (f==='BLOCKED') matchF=p.blocked==='Y';
-    else if (f==='WARNED') matchF=p.warned==='Y';
-    else if (f==='LATE') matchF=parseInt(p.late_count||0)>0;
-    else if (f==='STAFF') matchF=(p.notes||'').toUpperCase().includes('STAFF');
-    return matchQ && matchF;
+function daysOut(d){
+  // Returns {days, overdueDays} for any checked-out device
+  if(d.status!=='C'||!d.due_date)return null;
+  const due=pd(d.due_date);if(!due)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  // days since checkout = 21 - days remaining until due (or 21 + days past due)
+  const daysUntilDue=Math.round((due-today)/86400000);
+  const totalOut=21-daysUntilDue;          // days it has been checked out
+  const overdueDays=daysUntilDue<0?Math.abs(daysUntilDue):0;
+  return{totalOut:Math.max(totalOut,0),overdueDays};
+}
+
+function daysOutCell(d){
+  if(d.status!=='C')return'&mdash;';
+  const info=daysOut(d);
+  if(!info)return'&mdash;';
+  const {totalOut,overdueDays}=info;
+  if(overdueDays===0){
+    // still on time — show days out in normal muted style
+    return`<span class="mono" style="color:var(--muted)">${totalOut}d</span>`;
+  }else if(overdueDays<=7){
+    // overdue 1-7 days — bold yellow
+    return`<span class="mono" style="font-weight:700;color:#000;background:#f0b429;padding:2px 7px;border-radius:4px;">${totalOut}d &nbsp;+${overdueDays}d late</span>`;
+  }else{
+    // overdue more than 7 days — bold bright red
+    return`<span class="mono" style="font-weight:700;color:#fff;background:#e53935;padding:2px 7px;border-radius:4px;">${totalOut}d &nbsp;+${overdueDays}d late</span>`;
+  }
+}
+
+function mkRow(d){
+  const od=isOD(d),soon=isDS(d);
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><strong class="mono">#${d.device_num}</strong></td>
+    <td><span class="badge badge-${d.status}">${slbl(d.status)}</span></td>
+    <td class="mono">${d.barcode||'&mdash;'}</td>
+    <td class="mono">${d.phone||'&mdash;'}</td>
+    <td><code style="font-size:11px;color:var(--cyan)">${d.library||''}</code></td>
+    <td class="${od?'overdue':soon?'due-soon':''}">${fd(d.due_date)||'&mdash;'}</td>
+    <td>${daysOutCell(d)}</td>
+    <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'&mdash;'}</td>
+    <td>${d.under_contract==='Y'?'<span style="color:var(--green)">&#10003;</span>':'<span style="color:var(--muted)">No</span>'}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="openDt('${d.device_num}')">&#128269;</button>
+      ${d.status==='A'||d.status==='P'?`<button class="btn btn-primary btn-sm" onclick="openCO('${d.device_num}')">Out</button>`:''}
+      ${d.status==='C'?`<button class="btn btn-success btn-sm" onclick="openRet('${d.device_num}')">Return</button>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="openED('${d.device_num}')">&#9998;</button>
+    </div></td>`;
+  return tr;
+}
+
+// RENDER PATRONS
+function renderPatrons(){
+  const q=document.getElementById('pat-search').value.toLowerCase();
+  const f=document.getElementById('pat-filter').value.toUpperCase();
+  let list=patrons.filter(p=>{
+    const mQ=!q||[p.patron_id,p.email,p.notes].some(v=>(v||'').toLowerCase().includes(q));
+    let mF=true;
+    if(f==='BLOCKED')mF=p.blocked==='Y';
+    else if(f==='WARNED')mF=p.warned==='Y';
+    else if(f==='LATE')mF=parseInt(p.late_count||0)>0;
+    else if(f==='STAFF')mF=(p.notes||'').toUpperCase().includes('STAFF');
+    return mQ&&mF;
   });
   list.sort((a,b)=>parseInt(a.patron_id)-parseInt(b.patron_id));
-  const tbody=document.getElementById('pat-tbody');
-  tbody.innerHTML='';
+  const tbody=document.getElementById('pat-tbody');tbody.innerHTML='';
   document.getElementById('pat-empty').classList.toggle('hidden',list.length>0);
-  for (const p of list) {
+  for(const p of list){
     const lc=parseInt(p.late_count||0);
     const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td class="mono" style="color:var(--accent2)">${p.patron_id}</td>
-      <td>${p.email||'—'}</td>
-      <td>${lc>0?`<span class="badge badge-LATE">${lc}×</span>`:'<span style="color:var(--muted)">0</span>'}</td>
-      <td>
-        ${p.blocked==='Y'?'<span class="badge badge-BLOCKED">BLOCKED</span>':''}
-        ${p.warned==='Y'?'<span class="badge badge-WARNED">WARNED</span>':''}
-        ${(p.notes||'').toUpperCase().includes('STAFF')?'<span class="badge" style="background:#0d1a2a;color:var(--cyan);border:1px solid var(--cyan)">STAFF</span>':''}
-        ${p.blocked==='N'&&p.warned==='N'&&!(p.notes||'').toUpperCase().includes('STAFF')?'<span style="color:var(--muted)">—</span>':''}
-      </td>
-      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${p.notes||'—'}</td>
-      <td><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="openEditPatron('${p.patron_id}')">✏ Edit</button></td>`;
+    tr.innerHTML=`<td class="mono" style="color:var(--accent2)">${p.patron_id}</td>
+      <td>${p.email||'&mdash;'}</td>
+      <td>${lc>0?`<span class="badge badge-LATE">${lc}&times;</span>`:'<span style="color:var(--muted)">0</span>'}</td>
+      <td>${p.blocked==='Y'?'<span class="badge badge-BLOCKED">BLOCKED</span>':''}${p.warned==='Y'?'<span class="badge badge-WARNED">WARNED</span>':''}${(p.notes||'').toUpperCase().includes('STAFF')?'<span class="badge" style="background:#0d1a2a;color:var(--cyan);border:1px solid var(--cyan)">STAFF</span>':''}${p.blocked==='N'&&p.warned==='N'&&!(p.notes||'').toUpperCase().includes('STAFF')?'<span style="color:var(--muted)">&mdash;</span>':''}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${p.notes||'&mdash;'}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openEP('${p.patron_id}')">&#9998; Edit</button></td>`;
     tbody.appendChild(tr);
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  RENDER LOG
-// ═══════════════════════════════════════════════════════
-function renderLog() {
+// RENDER LOG
+function renderLog(){
   const q=document.getElementById('log-search').value.toLowerCase();
   const t=document.getElementById('log-type').value;
-  const list = logEntries.filter(e=>(!q||e.msg.toLowerCase().includes(q))&&(!t||e.type===t));
-  const container=document.getElementById('log-container');
-  container.innerHTML='';
+  const list=logE.filter(e=>(!q||e.msg.toLowerCase().includes(q))&&(!t||e.type===t));
+  const c=document.getElementById('log-container');c.innerHTML='';
   document.getElementById('log-empty').classList.toggle('hidden',list.length>0);
-  const dots={checkout:'●',return:'●',edit:'◆',add:'★',delete:'✕'};
-  for (const e of list) {
-    const div=document.createElement('div');
-    div.className=`log-entry ${e.type}`;
-    div.innerHTML=`<div class="dot">${dots[e.type]||'•'}</div><div class="ts">${e.ts}</div><div class="msg">${e.msg}</div>`;
-    container.appendChild(div);
-  }
+  const dots={checkout:'&#9679;',return:'&#9679;',edit:'&#9670;',add:'&#9733;',delete:'&#10005;'};
+  for(const e of list){const d=document.createElement('div');d.className=`log-entry ${e.type}`;d.innerHTML=`<div class="dot">${dots[e.type]||'&#8226;'}</div><div class="ts">${e.ts}</div><div class="msg">${e.msg}</div>`;c.appendChild(d);}
 }
 
-// ═══════════════════════════════════════════════════════
-//  CHECKOUT
-// ═══════════════════════════════════════════════════════
-let coDevNum=null;
-function openCheckout(num) {
-  coDevNum=num;
-  document.getElementById('co-dev-num').textContent=num;
-  const today=new Date(), due=new Date(today);
-  due.setDate(due.getDate()+21);
-  document.getElementById('co-checkout-date').value=today.toISOString().split('T')[0];
-  document.getElementById('co-due-date').value=due.toISOString().split('T')[0];
-  document.getElementById('co-patron-id').value='';
-  document.getElementById('co-patron-email').value='';
-  document.getElementById('co-notes').value='';
-  document.getElementById('co-patron-info').style.display='none';
-  const dl=document.getElementById('patron-dl');
-  dl.innerHTML=patrons.map(p=>`<option value="${p.patron_id}">${p.patron_id} – ${p.email}</option>`).join('');
+// CHECKOUT — default COL-HQ
+let coN=null;
+function openCO(num){
+  coN=num;
+  document.getElementById('co-num').textContent=num;
+  const t=new Date(),due=new Date(t);due.setDate(due.getDate()+21);
+  document.getElementById('co-date').value=t.toISOString().split('T')[0];
+  document.getElementById('co-due').value=due.toISOString().split('T')[0];
+  document.getElementById('co-pid').value='';document.getElementById('co-email').value='';document.getElementById('co-notes').value='';
+  document.getElementById('co-pinfo').style.display='none';
+  document.getElementById('co-lib').value='COL-HQ';
+  document.getElementById('co-dl').innerHTML=patrons.map(p=>`<option value="${p.patron_id}">${p.patron_id} - ${p.email}</option>`).join('');
   document.getElementById('modal-checkout').classList.remove('hidden');
 }
-function lookupPatron() {
-  const id=document.getElementById('co-patron-id').value.trim();
+function lookupP(){
+  const id=document.getElementById('co-pid').value.trim();
   const p=patrons.find(x=>x.patron_id===id);
-  const box=document.getElementById('co-patron-info');
-  if (p) {
-    document.getElementById('co-patron-email').value=p.email||'';
-    let html=`<strong>${p.patron_id}</strong> · ${p.email}`;
-    if(p.blocked==='Y') html+=` <span class="badge badge-BLOCKED">BLOCKED</span>`;
-    if(p.warned==='Y')  html+=` <span class="badge badge-WARNED">WARNED</span>`;
-    if(parseInt(p.late_count||0)>0) html+=` <span class="badge badge-LATE">${p.late_count}× late</span>`;
-    box.innerHTML=html; box.style.display='block';
-  } else { box.style.display='none'; document.getElementById('co-patron-email').value=''; }
+  const box=document.getElementById('co-pinfo');
+  if(p){
+    document.getElementById('co-email').value=p.email||'';
+    let h=`<strong>${p.patron_id}</strong> &middot; ${p.email}`;
+    if(p.blocked==='Y')h+=` <span class="badge badge-BLOCKED">BLOCKED</span>`;
+    if(p.warned==='Y')h+=` <span class="badge badge-WARNED">WARNED</span>`;
+    if(parseInt(p.late_count||0)>0)h+=` <span class="badge badge-LATE">${p.late_count}&times; late</span>`;
+    box.innerHTML=h;box.style.display='block';
+  }else{box.style.display='none';document.getElementById('co-email').value='';}
 }
-async function doCheckout() {
-  const pid=document.getElementById('co-patron-id').value.trim();
-  if (!pid){alert('Please enter a Patron ID.');return;}
-  const email=document.getElementById('co-patron-email').value.trim();
-  const due=fromInput(document.getElementById('co-due-date').value);
+async function doCheckout(){
+  const pid=document.getElementById('co-pid').value.trim();
+  if(!pid){alert('Please enter a Patron ID.');return;}
+  const email=document.getElementById('co-email').value.trim();
+  const due=fi(document.getElementById('co-due').value);
   const notes=document.getElementById('co-notes').value.trim();
-  showSaving();
-  try {
-    await sbUpdate('devices',{device_num:coDevNum},{status:'C',patron_id:pid,patron_email:email,due_date:due,notes:notes||undefined,updated_at:new Date().toISOString()});
-    const idx=devices.findIndex(d=>d.device_num===coDevNum);
-    if(idx>=0) Object.assign(devices[idx],{status:'C',patron_id:pid,patron_email:email,due_date:due});
-    await addLog('checkout',`MiFi #${coDevNum} checked out to Patron <strong>${pid}</strong> (${email}). Due: ${fmtDate(due)}`);
-    closeModal('checkout'); renderDevices();
-  } catch(e){alert('Save failed: '+e.message);}
+  const lib=document.getElementById('co-lib').value;
+  toast('Saving...');
+  try{
+    await sbU('devices',{device_num:coN},{status:'C',patron_id:pid,patron_email:email,due_date:due,library:lib,notes:notes||undefined,updated_at:new Date().toISOString()});
+    const idx=devices.findIndex(d=>d.device_num===coN);
+    if(idx>=0)Object.assign(devices[idx],{status:'C',patron_id:pid,patron_email:email,due_date:due,library:lib});
+    await addLog('checkout',`MiFi #${coN} checked out to Patron <strong>${pid}</strong> (${email}) at ${lib}. Due: ${fd(due)}`);
+    closeModal('checkout');renderDevices();
+  }catch(e){alert('Save failed: '+e.message);}
 }
 
-// ═══════════════════════════════════════════════════════
-//  RETURN
-// ═══════════════════════════════════════════════════════
-let retDevNum=null;
-function openReturn(num) {
-  retDevNum=num;
+// RETURN — default COL-HQ
+let retN=null;
+function openRet(num){
+  retN=num;
   const d=devices.find(x=>x.device_num===num);
-  document.getElementById('ret-dev-num').textContent=num;
-  document.getElementById('ret-info').innerHTML=`Patron: <strong>${d.patron_id||'—'}</strong> · ${d.patron_email||''}<br>Due: <span class="${isOverdue(d)?'overdue':''}">${fmtDate(d.due_date)||'—'}</span>${isOverdue(d)?' ⚠ OVERDUE':''}`;
+  document.getElementById('ret-num').textContent=num;
+  document.getElementById('ret-info').innerHTML=`Patron: <strong>${d.patron_id||'&mdash;'}</strong> &middot; ${d.patron_email||''}<br>Due: <span class="${isOD(d)?'overdue':''}">${fd(d.due_date)||'&mdash;'}</span>${isOD(d)?' &#9888; OVERDUE':''}`;
   document.getElementById('ret-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('ret-notes').value='';
+  document.getElementById('ret-lib').value='COL-HQ';
   document.getElementById('modal-return').classList.remove('hidden');
 }
-async function doReturn() {
-  const d=devices.find(x=>x.device_num===retDevNum);
-  const newStatus=document.getElementById('ret-status').value;
-  const retDate=fromInput(document.getElementById('ret-date').value);
+async function doReturn(){
+  const d=devices.find(x=>x.device_num===retN);
+  const ns=document.getElementById('ret-status').value;
+  const rd=fi(document.getElementById('ret-date').value);
   const notes=document.getElementById('ret-notes').value.trim();
-  const wasOverdue=isOverdue(d); const pid=d.patron_id;
-  showSaving();
-  try {
-    const upd={status:newStatus,due_date:'',updated_at:new Date().toISOString()};
-    if(newStatus==='A'){upd.patron_id='';upd.patron_email='';}
-    if(notes) upd.notes=notes;
-    await sbUpdate('devices',{device_num:retDevNum},upd);
-    Object.assign(d,upd);
-    if(wasOverdue && pid) {
-      const p=patrons.find(x=>x.patron_id===pid);
-      if(p){
-        const newCount=String(parseInt(p.late_count||0)+1);
-        await sbUpdate('patrons',{patron_id:pid},{late_count:newCount,updated_at:new Date().toISOString()});
-        p.late_count=newCount;
-      }
-    }
-    await addLog('return',`MiFi #${retDevNum} returned by Patron <strong>${pid}</strong>. ${wasOverdue?'<span style="color:var(--red)">⚠ OVERDUE</span>':''} Return: ${fmtDate(retDate)}. New status: ${statusLabel(newStatus)}`);
-    closeModal('return'); renderDevices(); renderPatrons();
-  } catch(e){alert('Save failed: '+e.message);}
+  const lib=document.getElementById('ret-lib').value;
+  const wasOD=isOD(d);const pid=d.patron_id;
+  toast('Saving...');
+  try{
+    const upd={status:ns,due_date:'',library:lib,updated_at:new Date().toISOString()};
+    if(ns==='A'){upd.patron_id='';upd.patron_email='';}
+    if(notes)upd.notes=notes;
+    await sbU('devices',{device_num:retN},upd);Object.assign(d,upd);
+    if(wasOD&&pid){const p=patrons.find(x=>x.patron_id===pid);if(p){const nc=String(parseInt(p.late_count||0)+1);await sbU('patrons',{patron_id:pid},{late_count:nc,updated_at:new Date().toISOString()});p.late_count=nc;}}
+    await addLog('return',`MiFi #${retN} returned by Patron <strong>${pid}</strong> to ${lib}. ${wasOD?'<span style="color:var(--red)">&#9888; OVERDUE</span>':''} Return: ${fd(rd)}. Status: ${slbl(ns)}`);
+    closeModal('return');renderDevices();renderPatrons();
+  }catch(e){alert('Save failed: '+e.message);}
 }
 
-// ═══════════════════════════════════════════════════════
-//  ADD / EDIT DEVICE
-// ═══════════════════════════════════════════════════════
-let editDevNum=null;
-function autoLast5() {
-  const v=document.getElementById('fd-imei').value.trim();
-  if(v.length>=5) document.getElementById('fd-last5').value=v.slice(-5);
+// ADD/EDIT DEVICE — default COL-HQ
+let edN=null;
+function al5(){const v=document.getElementById('fd-imei').value.trim();if(v.length>=5)document.getElementById('fd-last5').value=v.slice(-5);}
+function openAddDevice(){
+  edN=null;document.getElementById('dmod-title').textContent='Add New Device';
+  ['fd-num','fd-barcode','fd-imei','fd-last5','fd-phone','fd-pid','fd-pemail','fd-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fd-status').value='A';document.getElementById('fd-lib').value='COL-HQ';
+  document.getElementById('fd-contract').value='Y';document.getElementById('fd-billed').value='Y';document.getElementById('fd-due').value='';
+  document.getElementById('fd-del').classList.add('hidden');document.getElementById('modal-device').classList.remove('hidden');
 }
-function openAddDevice() {
-  editDevNum=null;
-  document.getElementById('dev-modal-title').textContent='Add New Device';
-  ['fd-num','fd-barcode','fd-imei','fd-last5','fd-phone','fd-patron-id','fd-patron-email','fd-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fd-status').value='A';
-  document.getElementById('fd-lib').value='COL-HQ';
-  document.getElementById('fd-contract').value='Y';
-  document.getElementById('fd-billed').value='Y';
-  document.getElementById('fd-due').value='';
-  document.getElementById('fd-delete-btn').classList.add('hidden');
-  document.getElementById('modal-device').classList.remove('hidden');
-}
-function openEditDevice(num) {
-  editDevNum=num;
-  const d=devices.find(x=>x.device_num===num);
-  document.getElementById('dev-modal-title').textContent=`Edit MiFi #${num}`;
-  document.getElementById('fd-num').value=d.device_num||'';
-  document.getElementById('fd-barcode').value=d.barcode||'';
-  document.getElementById('fd-imei').value=d.imei||'';
-  document.getElementById('fd-last5').value=d.last5||'';
-  document.getElementById('fd-phone').value=d.phone||'';
-  document.getElementById('fd-status').value=d.status||'A';
-  document.getElementById('fd-due').value=toInput(d.due_date);
-  document.getElementById('fd-lib').value=d.library||'COL-HQ';
-  document.getElementById('fd-contract').value=d.under_contract||'Y';
-  document.getElementById('fd-billed').value=d.being_billed||'Y';
-  document.getElementById('fd-patron-id').value=d.patron_id||'';
-  document.getElementById('fd-patron-email').value=d.patron_email||'';
+function openED(num){
+  edN=num;const d=devices.find(x=>x.device_num===num);
+  document.getElementById('dmod-title').textContent='Edit MiFi #'+num;
+  document.getElementById('fd-num').value=d.device_num||'';document.getElementById('fd-barcode').value=d.barcode||'';
+  document.getElementById('fd-imei').value=d.imei||'';document.getElementById('fd-last5').value=d.last5||'';
+  document.getElementById('fd-phone').value=d.phone||'';document.getElementById('fd-status').value=d.status||'A';
+  document.getElementById('fd-due').value=ti(d.due_date);document.getElementById('fd-lib').value=d.library||'COL-HQ';
+  document.getElementById('fd-contract').value=d.under_contract||'Y';document.getElementById('fd-billed').value=d.being_billed||'Y';
+  document.getElementById('fd-pid').value=d.patron_id||'';document.getElementById('fd-pemail').value=d.patron_email||'';
   document.getElementById('fd-notes').value=d.notes||'';
-  document.getElementById('fd-delete-btn').classList.remove('hidden');
-  document.getElementById('modal-device').classList.remove('hidden');
+  document.getElementById('fd-del').classList.remove('hidden');document.getElementById('modal-device').classList.remove('hidden');
 }
-async function saveDevice() {
-  const num=document.getElementById('fd-num').value.trim();
-  if(!num){alert('Device number required.');return;}
+async function saveDev(){
+  const num=document.getElementById('fd-num').value.trim();if(!num){alert('Device number required.');return;}
   const imei=document.getElementById('fd-imei').value.trim();
-  const obj={
-    device_num:num, barcode:document.getElementById('fd-barcode').value.trim(),
-    imei, last5:imei.length>=5?imei.slice(-5):document.getElementById('fd-last5').value.trim(),
-    phone:document.getElementById('fd-phone').value.trim(),
-    status:document.getElementById('fd-status').value,
-    due_date:fromInput(document.getElementById('fd-due').value),
-    library:document.getElementById('fd-lib').value,
-    under_contract:document.getElementById('fd-contract').value,
-    being_billed:document.getElementById('fd-billed').value,
-    patron_id:document.getElementById('fd-patron-id').value.trim(),
-    patron_email:document.getElementById('fd-patron-email').value.trim(),
-    notes:document.getElementById('fd-notes').value.trim(),
-    updated_at:new Date().toISOString()
-  };
-  showSaving();
-  try {
-    if (editDevNum) {
-      await sbUpdate('devices',{device_num:editDevNum},obj);
-      const idx=devices.findIndex(d=>d.device_num===editDevNum);
-      if(idx>=0) devices[idx]={...devices[idx],...obj};
-      await addLog('edit',`MiFi #${num} record updated.`);
-    } else {
-      if(devices.find(d=>d.device_num===num)){alert('Device # already exists.');return;}
-      const res=await sbInsert('devices',obj);
-      devices.push(Array.isArray(res)?res[0]:res);
-      await addLog('add',`New MiFi #${num} added (${obj.library}).`);
-    }
-    closeModal('device'); renderDevices();
-  } catch(e){alert('Save failed: '+e.message);}
+  const obj={device_num:num,barcode:document.getElementById('fd-barcode').value.trim(),imei,last5:imei.length>=5?imei.slice(-5):document.getElementById('fd-last5').value.trim(),phone:document.getElementById('fd-phone').value.trim(),status:document.getElementById('fd-status').value,due_date:fi(document.getElementById('fd-due').value),library:document.getElementById('fd-lib').value,under_contract:document.getElementById('fd-contract').value,being_billed:document.getElementById('fd-billed').value,patron_id:document.getElementById('fd-pid').value.trim(),patron_email:document.getElementById('fd-pemail').value.trim(),notes:document.getElementById('fd-notes').value.trim(),updated_at:new Date().toISOString()};
+  toast('Saving...');
+  try{
+    if(edN){await sbU('devices',{device_num:edN},obj);const idx=devices.findIndex(d=>d.device_num===edN);if(idx>=0)devices[idx]={...devices[idx],...obj};await addLog('edit',`MiFi #${num} updated.`);}
+    else{if(devices.find(d=>d.device_num===num)){alert('Device # already exists.');return;}const r=await sbI('devices',obj);devices.push(Array.isArray(r)?r[0]:r);await addLog('add',`New MiFi #${num} added (${obj.library}).`);}
+    closeModal('device');renderDevices();
+  }catch(e){alert('Save failed: '+e.message);}
 }
-async function deleteDevice() {
-  if(!confirm(`Delete MiFi #${editDevNum}? This cannot be undone.`)) return;
-  showSaving('🗑 Deleting...');
-  try {
-    await sbDelete('devices',{device_num:editDevNum});
-    devices=devices.filter(d=>d.device_num!==editDevNum);
-    await addLog('delete',`MiFi #${editDevNum} deleted from system.`);
-    closeModal('device'); renderDevices();
-  } catch(e){alert('Delete failed: '+e.message);}
+async function deleteDev(){
+  if(!confirm(`Delete MiFi #${edN}? Cannot be undone.`))return;toast('Deleting...');
+  try{await sbD('devices',{device_num:edN});devices=devices.filter(d=>d.device_num!==edN);await addLog('delete',`MiFi #${edN} deleted.`);closeModal('device');renderDevices();}
+  catch(e){alert('Delete failed: '+e.message);}
 }
 
-// ═══════════════════════════════════════════════════════
-//  ADD / EDIT PATRON
-// ═══════════════════════════════════════════════════════
-let editPatId=null;
-function openAddPatron() {
-  editPatId=null;
-  document.getElementById('pat-modal-title').textContent='Add Patron';
-  ['fp-id','fp-email','fp-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fp-blocked').value='N';
-  document.getElementById('fp-warned').value='N';
-  document.getElementById('fp-late').value='0';
-  document.getElementById('fp-delete-btn').classList.add('hidden');
-  document.getElementById('modal-patron').classList.remove('hidden');
+// ADD/EDIT PATRON
+let epId=null;
+function openAddPatron(){epId=null;document.getElementById('pmod-title').textContent='Add Patron';['fp-id','fp-email','fp-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('fp-blocked').value='N';document.getElementById('fp-warned').value='N';document.getElementById('fp-late').value='0';document.getElementById('fp-del').classList.add('hidden');document.getElementById('modal-patron').classList.remove('hidden');}
+function openEP(id){epId=id;const p=patrons.find(x=>x.patron_id===id);document.getElementById('pmod-title').textContent='Edit Patron '+id;document.getElementById('fp-id').value=p.patron_id||'';document.getElementById('fp-email').value=p.email||'';document.getElementById('fp-blocked').value=p.blocked||'N';document.getElementById('fp-warned').value=p.warned||'N';document.getElementById('fp-late').value=p.late_count||'0';document.getElementById('fp-notes').value=p.notes||'';document.getElementById('fp-del').classList.remove('hidden');document.getElementById('modal-patron').classList.remove('hidden');}
+async function savePat(){
+  const id=document.getElementById('fp-id').value.trim();if(!id){alert('Patron ID required.');return;}
+  const obj={patron_id:id,email:document.getElementById('fp-email').value.trim(),blocked:document.getElementById('fp-blocked').value,warned:document.getElementById('fp-warned').value,late_count:document.getElementById('fp-late').value||'0',notes:document.getElementById('fp-notes').value.trim(),updated_at:new Date().toISOString()};
+  toast('Saving...');
+  try{
+    if(epId){await sbU('patrons',{patron_id:epId},obj);const idx=patrons.findIndex(p=>p.patron_id===epId);if(idx>=0)patrons[idx]={...patrons[idx],...obj};await addLog('edit',`Patron ${id} updated.`);}
+    else{if(patrons.find(p=>p.patron_id===id)){alert('Patron ID already exists.');return;}const r=await sbI('patrons',obj);patrons.push(Array.isArray(r)?r[0]:r);await addLog('add',`New Patron ${id} added.`);}
+    closeModal('patron');renderPatrons();
+  }catch(e){alert('Save failed: '+e.message);}
 }
-function openEditPatron(id) {
-  editPatId=id;
-  const p=patrons.find(x=>x.patron_id===id);
-  document.getElementById('pat-modal-title').textContent=`Edit Patron ${id}`;
-  document.getElementById('fp-id').value=p.patron_id||'';
-  document.getElementById('fp-email').value=p.email||'';
-  document.getElementById('fp-blocked').value=p.blocked||'N';
-  document.getElementById('fp-warned').value=p.warned||'N';
-  document.getElementById('fp-late').value=p.late_count||'0';
-  document.getElementById('fp-notes').value=p.notes||'';
-  document.getElementById('fp-delete-btn').classList.remove('hidden');
-  document.getElementById('modal-patron').classList.remove('hidden');
-}
-async function savePatron() {
-  const id=document.getElementById('fp-id').value.trim();
-  if(!id){alert('Patron ID required.');return;}
-  const obj={patron_id:id, email:document.getElementById('fp-email').value.trim(),
-    blocked:document.getElementById('fp-blocked').value, warned:document.getElementById('fp-warned').value,
-    late_count:document.getElementById('fp-late').value||'0',
-    notes:document.getElementById('fp-notes').value.trim(), updated_at:new Date().toISOString()};
-  showSaving();
-  try {
-    if (editPatId) {
-      await sbUpdate('patrons',{patron_id:editPatId},obj);
-      const idx=patrons.findIndex(p=>p.patron_id===editPatId);
-      if(idx>=0) patrons[idx]={...patrons[idx],...obj};
-      await addLog('edit',`Patron ${id} record updated.`);
-    } else {
-      if(patrons.find(p=>p.patron_id===id)){alert('Patron ID already exists.');return;}
-      const res=await sbInsert('patrons',obj);
-      patrons.push(Array.isArray(res)?res[0]:res);
-      await addLog('add',`New Patron ${id} added.`);
-    }
-    closeModal('patron'); renderPatrons();
-  } catch(e){alert('Save failed: '+e.message);}
-}
-async function deletePatron() {
-  if(!confirm(`Delete Patron ${editPatId}? This cannot be undone.`)) return;
-  showSaving('🗑 Deleting...');
-  try {
-    await sbDelete('patrons',{patron_id:editPatId});
-    patrons=patrons.filter(p=>p.patron_id!==editPatId);
-    await addLog('delete',`Patron ${editPatId} deleted.`);
-    closeModal('patron'); renderPatrons();
-  } catch(e){alert('Delete failed: '+e.message);}
+async function deletePat(){
+  if(!confirm(`Delete Patron ${epId}?`))return;toast('Deleting...');
+  try{await sbD('patrons',{patron_id:epId});patrons=patrons.filter(p=>p.patron_id!==epId);await addLog('delete',`Patron ${epId} deleted.`);closeModal('patron');renderPatrons();}
+  catch(e){alert('Delete failed: '+e.message);}
 }
 
-// ═══════════════════════════════════════════════════════
-//  DETAIL VIEW
-// ═══════════════════════════════════════════════════════
-function openDetail(num) {
+// DETAIL
+function openDt(num){
   const d=devices.find(x=>x.device_num===num);
   const p=d.patron_id?patrons.find(x=>x.patron_id===d.patron_id):null;
-  const hist=logEntries.filter(e=>e.msg&&e.msg.includes('#'+num));
+  const hist=logE.filter(e=>e.msg&&e.msg.includes('#'+num));
   document.getElementById('dt-num').textContent=num;
   document.getElementById('dt-body').innerHTML=`
     <div class="detail-grid">
-      <div class="detail-item"><div class="dk">Status</div><div class="dv"><span class="badge badge-${d.status}">${statusLabel(d.status)}</span></div></div>
-      <div class="detail-item"><div class="dk">Library</div><div class="dv">${d.library||'—'}</div></div>
-      <div class="detail-item"><div class="dk">Barcode</div><div class="dv">${d.barcode||'—'}</div></div>
-      <div class="detail-item"><div class="dk">IMEI</div><div class="dv">${d.imei||'—'}</div></div>
-      <div class="detail-item"><div class="dk">Phone</div><div class="dv">${d.phone||'—'}</div></div>
-      <div class="detail-item"><div class="dk">Due Date</div><div class="dv ${isOverdue(d)?'overdue':''}">${fmtDate(d.due_date)||'—'}</div></div>
+      <div class="detail-item"><div class="dk">Status</div><div class="dv"><span class="badge badge-${d.status}">${slbl(d.status)}</span></div></div>
+      <div class="detail-item"><div class="dk">Location</div><div class="dv">${d.library||'&mdash;'}</div></div>
+      <div class="detail-item"><div class="dk">Barcode</div><div class="dv">${d.barcode||'&mdash;'}</div></div>
+      <div class="detail-item"><div class="dk">IMEI</div><div class="dv">${d.imei||'&mdash;'}</div></div>
+      <div class="detail-item"><div class="dk">Phone</div><div class="dv">${d.phone||'&mdash;'}</div></div>
+      <div class="detail-item"><div class="dk">Due Date</div><div class="dv ${isOD(d)?'overdue':''}">${fd(d.due_date)||'&mdash;'}</div></div>
       <div class="detail-item"><div class="dk">Under Contract</div><div class="dv">${d.under_contract==='Y'?'Yes':'No'}</div></div>
       <div class="detail-item"><div class="dk">Being Billed</div><div class="dv">${d.being_billed==='Y'?'Yes':'No'}</div></div>
     </div>
-    ${d.patron_id?`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Current Patron</div>
-      <div><strong>${d.patron_id}</strong> · ${d.patron_email||''}
-      ${p?`${p.blocked==='Y'?'<span class="badge badge-BLOCKED" style="margin-left:6px">BLOCKED</span>':''}${p.warned==='Y'?'<span class="badge badge-WARNED" style="margin-left:6px">WARNED</span>':''}${parseInt(p.late_count||0)>0?`<span class="badge badge-LATE" style="margin-left:6px">${p.late_count}× late</span>`:''}`:''}
-      </div></div>`:''}
-    ${d.notes?`<div style="background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--orange)">📝 ${d.notes}</div>`:''}
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Transaction History</div>
-    ${hist.length?hist.map(e=>`<div class="log-entry ${e.type}"><div class="dot">●</div><div class="ts">${e.ts}</div><div class="msg">${e.msg}</div></div>`).join(''):'<div style="color:var(--muted);font-size:13px">No transactions recorded yet.</div>'}`;
+    ${d.patron_id?`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px;"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;">Current Patron</div><div><strong>${d.patron_id}</strong> &middot; ${d.patron_email||''}${p?`${p.blocked==='Y'?' <span class="badge badge-BLOCKED">BLOCKED</span>':''}${p.warned==='Y'?' <span class="badge badge-WARNED">WARNED</span>':''}${parseInt(p.late_count||0)>0?` <span class="badge badge-LATE">${p.late_count}&times; late</span>`:''}`:''}></div></div>`:''}
+    ${d.notes?`<div style="background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--orange)">&#128203; ${d.notes}</div>`:''}
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;">Transaction History</div>
+    ${hist.length?hist.map(e=>`<div class="log-entry ${e.type}"><div class="dot">&#9679;</div><div class="ts">${e.ts}</div><div class="msg">${e.msg}</div></div>`).join(''):'<div style="color:var(--muted);font-size:13px">No transactions recorded yet.</div>'}`;
   document.getElementById('modal-detail').classList.remove('hidden');
 }
 
-// ═══════════════════════════════════════════════════════
-//  MODAL HELPERS
-// ═══════════════════════════════════════════════════════
-function closeModal(name) { document.getElementById('modal-'+name).classList.add('hidden'); }
+// IMPORT / EXPORT
+function exportData(type){
+  let headers,rows,fname;
+  const d=new Date().toISOString().split('T')[0];
+  if(type==='devices'){headers=['device_num','barcode','imei','last5','phone','status','due_date','under_contract','being_billed','library','patron_id','patron_email','notes'];rows=devices;fname=`MiFiDevices_${d}.csv`;}
+  else if(type==='patrons'){headers=['patron_id','email','blocked','warned','late_count','notes'];rows=patrons;fname=`Patrons_${d}.csv`;}
+  else{headers=['id','ts','type','msg','created_at'];rows=logE;fname=`MiFiHistory_${d}.csv`;}
+  const esc=v=>{const s=String(v==null?'':v);return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`  :s;};
+  const csv=[headers.join(','),...rows.map(r=>headers.map(h=>esc(r[h]??'')).join(','))].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fname;a.click();URL.revokeObjectURL(a.href);
+  toast('Exported '+fname,'var(--green)');
+}
+
+function triggerImport(type){const el=document.getElementById('imp-'+type);el.value='';el.click();}
+
+function importFile(type,input){
+  const file=input.files[0];if(!file)return;
+  const st=document.getElementById('io-st-'+type);
+  st.style.color='var(--muted)';st.textContent='Reading '+file.name+'...';
+  const reader=new FileReader();
+  reader.onerror=()=>{st.textContent='Error reading file.';st.style.color='var(--red)';};
+  reader.onload=async e=>{
+    try{
+      const rows=parseCSV(e.target.result);
+      if(!rows.length)throw new Error('No data rows found');
+      st.textContent='Uploading '+rows.length+' rows...';
+      if(type==='devices'){
+        for(let i=0;i<rows.length;i+=20)await sbUp('devices',rows.slice(i,i+20),'device_num');
+        devices=await sbG('devices','order=device_num.asc');renderDevices();updateStats();
+        await addLog('add',`Imported ${rows.length} devices from ${file.name}.`);
+        st.textContent=rows.length+' devices imported';st.style.color='var(--green)';
+      }else if(type==='patrons'){
+        for(let i=0;i<rows.length;i+=20)await sbUp('patrons',rows.slice(i,i+20),'patron_id');
+        patrons=await sbG('patrons','order=patron_id.asc');renderPatrons();
+        await addLog('add',`Imported ${rows.length} patrons from ${file.name}.`);
+        st.textContent=rows.length+' patrons imported';st.style.color='var(--green)';
+      }else{
+        const nr=rows.filter(r=>!r.id);
+        if(nr.length){for(let i=0;i<nr.length;i+=20)await sbI('txlog',nr.slice(i,i+20).map(({id,created_at,...rest})=>rest));logE=await sbG('txlog','order=id.desc&limit=500');renderLog();}
+        st.textContent=nr.length+' log entries appended';st.style.color='var(--green)';
+      }
+      toast('Import complete','var(--green)');
+    }catch(err){st.textContent='Error: '+err.message;st.style.color='var(--red)';}
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return[];
+  const headers=splitLine(lines[0]);
+  return lines.slice(1).map(line=>{const vals=splitLine(line);const obj={};headers.forEach((h,i)=>obj[h.trim()]=(vals[i]||'').trim());return obj;}).filter(o=>Object.values(o).some(v=>v));
+}
+function splitLine(line){const vals=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur);cur='';}else cur+=ch;}vals.push(cur);return vals;}
+
+// MODALS
+function closeModal(n){document.getElementById('modal-'+n).classList.add('hidden');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.add('hidden');}));
 
-// ═══════════════════════════════════════════════════════
-//  START
-// ═══════════════════════════════════════════════════════
 init();
 </script>
 </body>
