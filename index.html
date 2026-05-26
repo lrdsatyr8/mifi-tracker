@@ -185,7 +185,25 @@ tbody td{padding:10px 14px;vertical-align:middle;}
 .io-btn-row{display:flex;flex-direction:column;gap:10px;}
 .io-status{font-size:12px;min-height:18px;margin-top:8px;font-weight:600;}
 
-/* ── TOAST ── */
+/* ── ICON BUTTONS — used in table rows ── */
+.icon-btn{
+  width:32px;height:32px;border-radius:7px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text);font-size:15px;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:all .15s;position:relative;flex-shrink:0;
+  /* Native tooltip via title attr — enhanced with CSS */
+}
+.icon-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.icon-btn.icon-checkout{background:linear-gradient(135deg,#1d4ed8,#4f46e5);border-color:#3b82f6;color:#fff;}
+.icon-btn.icon-return{background:linear-gradient(135deg,#065f46,#0d9488);border-color:#22c55e;color:#fff;}
+.icon-btn.icon-suspend{background:linear-gradient(135deg,#78350f,#b45309);border-color:#fbbf24;color:#fde68a;}
+.icon-btn.icon-deactivate{background:linear-gradient(135deg,#7f1d1d,#991b1b);border-color:#ef4444;color:#fca5a5;}
+.icon-btn.icon-avail{background:linear-gradient(135deg,#052e16,#065f46);border-color:#22c55e;color:#4ade80;}
+.icon-btn.icon-checkout:hover{background:linear-gradient(135deg,#2563eb,#6366f1);}
+.icon-btn.icon-return:hover{background:linear-gradient(135deg,#047857,#0f766e);}
+.icon-btn.icon-suspend:hover{background:linear-gradient(135deg,#92400e,#d97706);}
+.icon-btn.icon-deactivate:hover{background:linear-gradient(135deg,#991b1b,#dc2626);}
+.icon-btn.icon-avail:hover{background:linear-gradient(135deg,#065f46,#059669);}
 .toast{position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#111827,#1e2d45);border:1px solid var(--border2);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--text);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.5);}
 .toast.show{opacity:1;}
 .hidden{display:none!important;}
@@ -428,25 +446,49 @@ tbody td{padding:10px 14px;vertical-align:middle;}
 
 <!-- ═══ LATE DEVICES MODAL ═══ -->
 <div class="overlay hidden" id="modal-late">
-  <div class="modal" style="max-width:800px">
+  <div class="modal" style="max-width:900px">
     <div class="modal-header" style="background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(185,28,28,.08))">
-      <h2 style="color:var(--red2)">&#9888; Overdue Devices</h2>
+      <h2 style="color:var(--red2)">&#9888; Late &amp; Overdue Report</h2>
       <button class="close-btn" onclick="closeModal('late')">&#10005;</button>
     </div>
-    <div class="modal-body" id="late-body">
-      <p style="color:var(--muted);margin-bottom:16px;font-size:13px;">All currently checked-out devices that have passed their due date.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>#</th><th>Barcode</th><th>Location</th><th>Due Date</th><th>Days Overdue</th><th>Patron</th><th>Email</th><th>Actions</th>
-          </tr></thead>
-          <tbody id="late-tbody"></tbody>
-        </table>
+    <div class="modal-body" style="padding-top:14px">
+      <!-- Tab bar -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;background:var(--surface2);border-radius:10px;padding:4px;">
+        <button id="late-tab-devices" class="tab active" onclick="switchLateTab('devices')" style="flex:1">&#128683; Overdue Devices</button>
+        <button id="late-tab-patrons" class="tab" onclick="switchLateTab('patrons')" style="flex:1">&#128100; Patron Suspension History</button>
       </div>
-      <div id="late-empty" class="empty hidden">&#10003; No overdue devices right now!</div>
+
+      <!-- Panel 1: Overdue Devices -->
+      <div id="late-panel-devices">
+        <p style="color:var(--muted);margin-bottom:12px;font-size:13px;">Devices currently checked out past their due date, oldest first.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Barcode</th><th>Location</th><th>Due Date</th><th>Overdue</th><th>Patron ID</th><th>Email</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="late-tbody"></tbody>
+          </table>
+        </div>
+        <div id="late-empty" class="empty hidden">&#10003; No overdue devices right now!</div>
+      </div>
+
+      <!-- Panel 2: Patron Suspension Analysis -->
+      <div id="late-panel-patrons" class="hidden">
+        <p style="color:var(--muted);margin-bottom:12px;font-size:13px;">Patrons with late returns, suspensions, warnings, or blocks — compiled from the full transaction log history. Sorted by worst offenders first.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Patron ID</th><th>Email</th><th>Suspensions / Late</th><th>Checkouts</th><th>Returns</th><th>Status</th><th>Notes</th><th></th>
+            </tr></thead>
+            <tbody id="late-pat-tbody"></tbody>
+          </table>
+        </div>
+        <div id="late-pat-empty" class="empty hidden">No patron suspension history found in log.</div>
+      </div>
     </div>
     <div class="modal-footer">
-      <div id="late-count" style="margin-right:auto;font-size:13px;color:var(--muted);"></div>
+      <div id="late-count" style="margin-right:auto;font-size:12px;color:var(--muted);"></div>
+      <div id="late-pat-count" style="margin-right:auto;font-size:12px;color:var(--muted);display:none"></div>
       <button class="btn btn-ghost" onclick="closeModal('late')">Close</button>
     </div>
   </div>
@@ -771,23 +813,23 @@ function dueDateCell(d){
 
 function mkRow(d){
   const tr=document.createElement('tr');
-  // Build action buttons based on current status
-  let actions=`<button class="btn btn-ghost btn-sm" onclick="openDt('${d.device_num}')" title="View Detail">&#128269;</button>`;
+  // Icon-only action buttons — text labels shown as tooltips
+  let actions=`<button class="icon-btn" onclick="openDt('${d.device_num}')" title="View Detail">&#128269;</button>`;
   if(d.status==='A'||d.status==='P'){
-    actions+=`<button class="btn btn-primary btn-sm" onclick="openCO('${d.device_num}')" title="Check Out">&#128228; Out</button>`;
-    actions+=`<button class="btn btn-warn btn-sm" onclick="openSuspend('${d.device_num}')" title="Suspend">&#9888; Suspend</button>`;
-    actions+=`<button class="btn btn-danger btn-sm" onclick="openDeactivate('${d.device_num}')" title="Deactivate">&#10006; Deactivate</button>`;
+    actions+=`<button class="icon-btn icon-checkout" onclick="openCO('${d.device_num}')" title="Check Out">&#128228;</button>`;
+    actions+=`<button class="icon-btn icon-suspend" onclick="openSuspend('${d.device_num}')" title="Suspend Device">&#9888;</button>`;
+    actions+=`<button class="icon-btn icon-deactivate" onclick="openDeactivate('${d.device_num}')" title="Deactivate Device">&#128683;</button>`;
   }
   if(d.status==='C'){
-    actions+=`<button class="btn btn-success btn-sm" onclick="openRet('${d.device_num}')" title="Return">&#8617; Return</button>`;
-    actions+=`<button class="btn btn-warn btn-sm" onclick="openSuspend('${d.device_num}')" title="Suspend">&#9888; Suspend</button>`;
-    actions+=`<button class="btn btn-danger btn-sm" onclick="openDeactivate('${d.device_num}')" title="Deactivate">&#10006; Deactivate</button>`;
+    actions+=`<button class="icon-btn icon-return" onclick="openRet('${d.device_num}')" title="Return Device">&#8617;</button>`;
+    actions+=`<button class="icon-btn icon-suspend" onclick="openSuspend('${d.device_num}')" title="Suspend Device">&#9888;</button>`;
+    actions+=`<button class="icon-btn icon-deactivate" onclick="openDeactivate('${d.device_num}')" title="Deactivate Device">&#128683;</button>`;
   }
   if(d.status==='S'||d.status==='D'||d.status==='M'){
-    actions+=`<button class="btn btn-success btn-sm" onclick="openMakeAvail('${d.device_num}')" title="Make Available">&#10003; Available</button>`;
-    actions+=`<button class="btn btn-danger btn-sm" onclick="openDeactivate('${d.device_num}')" title="Deactivate">&#10006; Deactivate</button>`;
+    actions+=`<button class="icon-btn icon-avail" onclick="openMakeAvail('${d.device_num}')" title="Make Available">&#9989;</button>`;
+    actions+=`<button class="icon-btn icon-deactivate" onclick="openDeactivate('${d.device_num}')" title="Deactivate Device">&#128683;</button>`;
   }
-  actions+=`<button class="btn btn-ghost btn-sm" onclick="openED('${d.device_num}')" title="Edit">&#9998;</button>`;
+  actions+=`<button class="icon-btn" onclick="openED('${d.device_num}')" title="Edit Record">&#9998;</button>`;
 
   tr.innerHTML=`<td><strong class="mono">#${d.device_num}</strong></td>
     <td><span class="badge badge-${d.status}">${slbl(d.status)}</span></td>
@@ -797,7 +839,7 @@ function mkRow(d){
     <td>${dueDateCell(d)}</td>
     <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'&mdash;'}</td>
     <td>${d.under_contract==='Y'?'<span style="color:var(--green)">&#10003;</span>':'<span style="color:var(--muted)">No</span>'}</td>
-    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${actions}</div></td>`;
+    <td><div style="display:flex;gap:3px;flex-wrap:nowrap;">${actions}</div></td>`;
   return tr;
 }
 
@@ -1162,14 +1204,13 @@ async function doMakeAvail(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  LATE DEVICES LIST
+//  LATE DEVICES + PATRON SUSPENSION ANALYSIS
 // ═══════════════════════════════════════════════════════
 function openLateDevices(){
   const today=new Date();today.setHours(0,0,0,0);
-  const late=devices.filter(d=>isOD(d)).sort((a,b)=>{
-    const da=pd(a.due_date),db=pd(b.due_date);
-    return da-db; // oldest due date first
-  });
+
+  // ── Tab 1: Currently overdue devices ──
+  const late=devices.filter(d=>isOD(d)).sort((a,b)=>pd(a.due_date)-pd(b.due_date));
   const tbody=document.getElementById('late-tbody');
   tbody.innerHTML='';
   document.getElementById('late-empty').classList.toggle('hidden',late.length>0);
@@ -1179,24 +1220,119 @@ function openLateDevices(){
     const overdueDays=Math.round((today-due)/86400000);
     const p=d.patron_id?patrons.find(x=>x.patron_id===d.patron_id):null;
     const tr=document.createElement('tr');
-    const odStyle=overdueDays>7?'font-weight:700;color:#fff;background:#e53935;padding:2px 8px;border-radius:4px':'font-weight:700;color:#000;background:#f0b429;padding:2px 8px;border-radius:4px';
+    const odStyle=overdueDays>7
+      ?'font-weight:700;color:#fff;background:#e53935;padding:2px 8px;border-radius:4px;font-size:12px'
+      :'font-weight:700;color:#000;background:#f0b429;padding:2px 8px;border-radius:4px;font-size:12px';
     tr.innerHTML=`
       <td><strong class="mono">#${d.device_num}</strong></td>
-      <td class="mono">${d.barcode||'&mdash;'}</td>
+      <td class="mono" style="font-size:11px">${d.barcode||'&mdash;'}</td>
       <td><code style="color:var(--cyan);font-size:11px">${d.library||''}</code></td>
-      <td class="overdue">${fd(d.due_date)}</td>
-      <td><span style="${odStyle}">${overdueDays}d overdue</span></td>
-      <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'&mdash;'}${p&&p.blocked==='Y'?' <span class="badge badge-BLOCKED" style="font-size:10px">BLOCKED</span>':''}</td>
-      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.patron_email||'&mdash;'}</td>
+      <td class="overdue" style="font-size:12px">${fd(d.due_date)}</td>
+      <td><span style="${odStyle}">${overdueDays}d</span></td>
+      <td>${d.patron_id?`<span class="mono" style="color:var(--accent2);font-size:12px">${d.patron_id}</span>`:'&mdash;'}
+        ${p&&p.blocked==='Y'?' <span class="badge badge-BLOCKED" style="font-size:10px">BLOCKED</span>':''}
+        ${p&&p.warned==='Y'?' <span class="badge badge-WARNED" style="font-size:10px">WARNED</span>':''}
+      </td>
+      <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${d.patron_email||'&mdash;'}</td>
       <td>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-warn btn-sm" onclick="closeModal('late');openSuspend('${d.device_num}')">&#9888; Suspend</button>
-          <button class="btn btn-success btn-sm" onclick="closeModal('late');openRet('${d.device_num}')">&#8617; Return</button>
+        <div style="display:flex;gap:3px;">
+          <button class="icon-btn icon-suspend" onclick="closeModal('late');openSuspend('${d.device_num}')" title="Suspend Device">&#9888;</button>
+          <button class="icon-btn icon-return" onclick="closeModal('late');openRet('${d.device_num}')" title="Return Device">&#8617;</button>
         </div>
       </td>`;
     tbody.appendChild(tr);
   }
+
+  // ── Tab 2: Patron suspension analysis from log ──
+  // Build a map: patron_id -> { suspensions, warns, blocks, checkouts, lastSeen }
+  const patronStats={};
+
+  // Regex patterns to extract patron ID from log messages
+  const pidRe=/\b(\d{5})\b/g;
+
+  for(const entry of logE){
+    const msg=entry.msg||'';
+    const msgUpper=msg.toUpperCase();
+    // Find all 5-digit patron IDs mentioned
+    const ids=[...new Set((msg.match(/\bPatron\s+(\d{5})\b/gi)||[]).map(m=>m.replace(/\bPatron\s+/i,'')))];
+    if(!ids.length)continue;
+
+    for(const pid of ids){
+      if(!patronStats[pid]) patronStats[pid]={suspensions:0,blocks:0,warns:0,checkouts:0,returns:0,lastSeen:entry.ts};
+      const s=patronStats[pid];
+      if(msgUpper.includes('SUSPEND')) s.suspensions++;
+      if(msgUpper.includes('BLOCK'))   s.blocks++;
+      if(msgUpper.includes('WARN'))    s.warns++;
+      if(entry.type==='checkout')      s.checkouts++;
+      if(entry.type==='return')        s.returns++;
+      // Track most recent log entry
+      s.lastSeen=entry.ts;
+    }
+  }
+
+  // Also fold in patron record data (late_count, blocked, warned flags)
+  for(const p of patrons){
+    if(!patronStats[p.patron_id]) patronStats[p.patron_id]={suspensions:0,blocks:0,warns:0,checkouts:0,returns:0,lastSeen:''};
+    const s=patronStats[p.patron_id];
+    // Use max of log-derived suspension count vs recorded late_count
+    s.recordedLate=parseInt(p.late_count||0);
+    s.isBlocked=p.blocked==='Y';
+    s.isWarned=p.warned==='Y';
+    s.email=p.email||'';
+    s.notes=p.notes||'';
+  }
+
+  // Sort: blocked first, then by suspensions desc, then warns desc
+  const sorted=Object.entries(patronStats)
+    .filter(([,s])=>s.suspensions>0||s.isBlocked||s.isWarned||s.recordedLate>0)
+    .sort(([,a],[,b])=>{
+      if(a.isBlocked!==b.isBlocked) return a.isBlocked?-1:1;
+      if(b.suspensions!==a.suspensions) return b.suspensions-a.suspensions;
+      if(b.recordedLate!==a.recordedLate) return b.recordedLate-a.recordedLate;
+      return 0;
+    });
+
+  const ptbody=document.getElementById('late-pat-tbody');
+  ptbody.innerHTML='';
+  document.getElementById('late-pat-empty').classList.toggle('hidden',sorted.length>0);
+  document.getElementById('late-pat-count').textContent=`${sorted.length} patrons with late/suspension history`;
+
+  for(const [pid,s] of sorted){
+    const suspCount=Math.max(s.suspensions,s.recordedLate||0);
+    const tr=document.createElement('tr');
+    const suspStyle=suspCount>5?'font-weight:700;color:#fff;background:#e53935;padding:2px 8px;border-radius:4px;font-size:12px'
+      :suspCount>2?'font-weight:700;color:#000;background:#f0b429;padding:2px 8px;border-radius:4px;font-size:12px'
+      :'font-size:12px;color:var(--orange)';
+    tr.innerHTML=`
+      <td class="mono" style="color:var(--accent2)">${pid}</td>
+      <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.email||'&mdash;'}</td>
+      <td><span style="${suspStyle}">${suspCount}×</span></td>
+      <td style="font-size:12px">${s.checkouts||0}</td>
+      <td style="font-size:12px">${s.returns||0}</td>
+      <td>
+        ${s.isBlocked?'<span class="badge badge-BLOCKED">BLOCKED</span>':''}
+        ${s.isWarned?'<span class="badge badge-WARNED">WARNED</span>':''}
+        ${!s.isBlocked&&!s.isWarned?'<span style="color:var(--muted)">—</span>':''}
+      </td>
+      <td style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.notes||'—'}</td>
+      <td>
+        <button class="icon-btn" onclick="closeModal('late');openEP('${pid}')" title="Edit Patron Record">&#9998;</button>
+      </td>`;
+    ptbody.appendChild(tr);
+  }
+
+  // Show first tab by default
+  switchLateTab('devices');
   document.getElementById('modal-late').classList.remove('hidden');
+}
+
+function switchLateTab(tab){
+  document.getElementById('late-tab-devices').classList.toggle('active',tab==='devices');
+  document.getElementById('late-tab-patrons').classList.toggle('active',tab==='patrons');
+  document.getElementById('late-panel-devices').classList.toggle('hidden',tab!=='devices');
+  document.getElementById('late-panel-patrons').classList.toggle('hidden',tab!=='patrons');
+  document.getElementById('late-count').style.display=tab==='devices'?'':'none';
+  document.getElementById('late-pat-count').style.display=tab==='patrons'?'':'none';
 }
 
 // ═══════════════════════════════════════════════════════
