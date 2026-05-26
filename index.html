@@ -240,6 +240,7 @@ tbody td{padding:10px 14px;vertical-align:middle;}
       <option selected>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option>
     </select>
     <button class="btn btn-primary" onclick="openAddDevice()">+ Add Device</button>
+    <button class="btn btn-danger" onclick="openLateDevices()" title="View all overdue devices">&#9888; Late Devices</button>
   </div>
   <div class="table-wrap">
     <table>
@@ -269,6 +270,7 @@ tbody td{padding:10px 14px;vertical-align:middle;}
       <option value="STAFF">Staff</option>
     </select>
     <button class="btn btn-primary" onclick="openAddPatron()">+ Add Patron</button>
+    <button class="btn btn-warn" onclick="openPatronHistory()" title="Look up how many times a patron has been late">&#128269; Patron Late History</button>
   </div>
   <div class="table-wrap">
     <table>
@@ -346,6 +348,139 @@ tbody td{padding:10px 14px;vertical-align:middle;}
 </div><!-- /app -->
 
 <div class="toast" id="toast"></div>
+
+<!-- ═══ SUSPEND MODAL ═══ -->
+<div class="overlay hidden" id="modal-suspend">
+  <div class="modal modal-sm">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08))">
+      <h2 style="color:var(--yellow)">&#9888; Suspend MiFi #<span id="susp-num"></span></h2>
+      <button class="close-btn" onclick="closeModal('suspend')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div id="susp-info" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.8;"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Suspension Date</label><input id="susp-date" type="date"></div>
+        <div class="form-group"><label>Date Device Was Due</label><input id="susp-due" type="date"></div>
+        <div class="form-group full"><label>Notes (reason for suspension)</label><textarea id="susp-notes" placeholder="e.g. Device not returned by due date. Patron notified."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('suspend')">Cancel</button>
+      <button class="btn btn-warn" onclick="doSuspend()">&#9888; Confirm Suspension</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DEACTIVATE MODAL ═══ -->
+<div class="overlay hidden" id="modal-deactivate">
+  <div class="modal modal-sm">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(185,28,28,.08))">
+      <h2 style="color:var(--red2)">&#10006; Deactivate MiFi #<span id="deact-num"></span></h2>
+      <button class="close-btn" onclick="closeModal('deactivate')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div id="deact-info" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.8;"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Deactivation Date</label><input id="deact-date" type="date"></div>
+        <div class="form-group"><label>Reason</label>
+          <select id="deact-reason">
+            <option value="Damaged beyond repair">Damaged beyond repair</option>
+            <option value="Lost - never returned">Lost - never returned</option>
+            <option value="Deactivated by Verizon">Deactivated by Verizon</option>
+            <option value="End of contract">End of contract</option>
+            <option value="Stolen">Stolen</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Additional Notes</label><textarea id="deact-notes" placeholder="Any additional details..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('deactivate')">Cancel</button>
+      <button class="btn btn-danger" onclick="doDeactivate()">&#10006; Confirm Deactivation</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAKE AVAILABLE MODAL ═══ -->
+<div class="overlay hidden" id="modal-avail">
+  <div class="modal modal-sm">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(5,150,105,.08))">
+      <h2 style="color:var(--green2)">&#10003; Make MiFi #<span id="avail-num"></span> Available</h2>
+      <button class="close-btn" onclick="closeModal('avail')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div id="avail-info" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.8;"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Date Made Available</label><input id="avail-date" type="date"></div>
+        <div class="form-group"><label>Return to Location</label>
+          <select id="avail-lib"><option>COL-HQ</option><option>COL-COT</option><option>COL-ED</option><option>COL-BK</option></select>
+        </div>
+        <div class="form-group full"><label>Notes</label><textarea id="avail-notes" placeholder="e.g. Device inspected and cleared for re-checkout."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('avail')">Cancel</button>
+      <button class="btn btn-success" onclick="doMakeAvail()">&#10003; Mark as Available</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LATE DEVICES MODAL ═══ -->
+<div class="overlay hidden" id="modal-late">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(185,28,28,.08))">
+      <h2 style="color:var(--red2)">&#9888; Overdue Devices</h2>
+      <button class="close-btn" onclick="closeModal('late')">&#10005;</button>
+    </div>
+    <div class="modal-body" id="late-body">
+      <p style="color:var(--muted);margin-bottom:16px;font-size:13px;">All currently checked-out devices that have passed their due date.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Barcode</th><th>Location</th><th>Due Date</th><th>Days Overdue</th><th>Patron</th><th>Email</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="late-tbody"></tbody>
+        </table>
+      </div>
+      <div id="late-empty" class="empty hidden">&#10003; No overdue devices right now!</div>
+    </div>
+    <div class="modal-footer">
+      <div id="late-count" style="margin-right:auto;font-size:13px;color:var(--muted);"></div>
+      <button class="btn btn-ghost" onclick="closeModal('late')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PATRON LATE HISTORY MODAL ═══ -->
+<div class="overlay hidden" id="modal-pat-history">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(109,40,217,.08))">
+      <h2 style="color:#d8b4fe">&#128269; Patron Late History</h2>
+      <button class="close-btn" onclick="closeModal('pat-history')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted);margin-bottom:16px;font-size:13px;">Look up a patron to see how many times they have been late returning a MiFi, based on suspensions logged against their account.</p>
+      <div style="display:flex;gap:10px;margin-bottom:20px;align-items:flex-end;">
+        <div class="form-group" style="flex:1">
+          <label>Patron ID</label>
+          <input id="ph-pid" list="ph-dl" placeholder="Enter 5-digit Patron ID" oninput="lookupPatronHistory()">
+          <datalist id="ph-dl"></datalist>
+        </div>
+        <button class="btn btn-primary" onclick="lookupPatronHistory()">&#128269; Look Up</button>
+      </div>
+      <div id="ph-result" style="display:none">
+        <div id="ph-summary" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:16px;"></div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Log Entries Involving This Patron</div>
+        <div id="ph-log" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+      <div id="ph-notfound" style="display:none;color:var(--muted);text-align:center;padding:20px;font-size:13px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('pat-history')">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- CHECKOUT MODAL -->
 <div class="overlay hidden" id="modal-checkout">
@@ -636,6 +771,24 @@ function dueDateCell(d){
 
 function mkRow(d){
   const tr=document.createElement('tr');
+  // Build action buttons based on current status
+  let actions=`<button class="btn btn-ghost btn-sm" onclick="openDt('${d.device_num}')" title="View Detail">&#128269;</button>`;
+  if(d.status==='A'||d.status==='P'){
+    actions+=`<button class="btn btn-primary btn-sm" onclick="openCO('${d.device_num}')" title="Check Out">&#128228; Out</button>`;
+    actions+=`<button class="btn btn-warn btn-sm" onclick="openSuspend('${d.device_num}')" title="Suspend">&#9888; Suspend</button>`;
+    actions+=`<button class="btn btn-danger btn-sm" onclick="openDeactivate('${d.device_num}')" title="Deactivate">&#10006; Deactivate</button>`;
+  }
+  if(d.status==='C'){
+    actions+=`<button class="btn btn-success btn-sm" onclick="openRet('${d.device_num}')" title="Return">&#8617; Return</button>`;
+    actions+=`<button class="btn btn-warn btn-sm" onclick="openSuspend('${d.device_num}')" title="Suspend">&#9888; Suspend</button>`;
+    actions+=`<button class="btn btn-danger btn-sm" onclick="openDeactivate('${d.device_num}')" title="Deactivate">&#10006; Deactivate</button>`;
+  }
+  if(d.status==='S'||d.status==='D'||d.status==='M'){
+    actions+=`<button class="btn btn-success btn-sm" onclick="openMakeAvail('${d.device_num}')" title="Make Available">&#10003; Available</button>`;
+    actions+=`<button class="btn btn-danger btn-sm" onclick="openDeactivate('${d.device_num}')" title="Deactivate">&#10006; Deactivate</button>`;
+  }
+  actions+=`<button class="btn btn-ghost btn-sm" onclick="openED('${d.device_num}')" title="Edit">&#9998;</button>`;
+
   tr.innerHTML=`<td><strong class="mono">#${d.device_num}</strong></td>
     <td><span class="badge badge-${d.status}">${slbl(d.status)}</span></td>
     <td class="mono">${d.barcode||'&mdash;'}</td>
@@ -644,12 +797,7 @@ function mkRow(d){
     <td>${dueDateCell(d)}</td>
     <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'&mdash;'}</td>
     <td>${d.under_contract==='Y'?'<span style="color:var(--green)">&#10003;</span>':'<span style="color:var(--muted)">No</span>'}</td>
-    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="openDt('${d.device_num}')">&#128269;</button>
-      ${d.status==='A'||d.status==='P'?`<button class="btn btn-primary btn-sm" onclick="openCO('${d.device_num}')">Out</button>`:''}
-      ${d.status==='C'?`<button class="btn btn-success btn-sm" onclick="openRet('${d.device_num}')">Return</button>`:''}
-      <button class="btn btn-ghost btn-sm" onclick="openED('${d.device_num}')">&#9998;</button>
-    </div></td>`;
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${actions}</div></td>`;
   return tr;
 }
 
@@ -906,10 +1054,230 @@ function parseCSV(text){
 }
 function splitLine(line){const vals=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur);cur='';}else cur+=ch;}vals.push(cur);return vals;}
 
+// ═══════════════════════════════════════════════════════
+//  SUSPEND
+// ═══════════════════════════════════════════════════════
+let suspNum=null;
+function openSuspend(num){
+  suspNum=num;
+  const d=devices.find(x=>x.device_num===num);
+  document.getElementById('susp-num').textContent=num;
+  document.getElementById('susp-info').innerHTML=`
+    <strong>MiFi #${num}</strong> &mdash; ${d.barcode||''} &mdash; <code style="color:var(--cyan)">${d.library||''}</code><br>
+    Status: <span class="badge badge-${d.status}">${slbl(d.status)}</span>
+    ${d.patron_id?`&nbsp;&bull;&nbsp; Patron: <strong>${d.patron_id}</strong> &nbsp;${d.patron_email||''}`:''}
+    ${d.due_date?`&nbsp;&bull;&nbsp; Was Due: <span class="${isOD(d)?'overdue':''}">${fd(d.due_date)}</span>`:''}`;
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('susp-date').value=today;
+  document.getElementById('susp-due').value=toInput(d.due_date)||today;
+  document.getElementById('susp-notes').value=d.notes||'';
+  document.getElementById('modal-suspend').classList.remove('hidden');
+}
+async function doSuspend(){
+  const d=devices.find(x=>x.device_num===suspNum);
+  const suspDate=document.getElementById('susp-date').value;
+  const dueDate=document.getElementById('susp-due').value;
+  const notes=document.getElementById('susp-notes').value.trim();
+  const noteStr=`Suspended ${fromInput(suspDate)} — Date due ${fromInput(dueDate)}${notes?' — '+notes:''}`;
+  toast('Suspending...');
+  try{
+    const upd={status:'S',notes:noteStr,updated_at:new Date().toISOString()};
+    await sbU('devices',{device_num:suspNum},upd);
+    Object.assign(d,upd);
+    // Increment patron late count if patron is assigned
+    if(d.patron_id){
+      const p=patrons.find(x=>x.patron_id===d.patron_id);
+      if(p){const nc=String(parseInt(p.late_count||0)+1);await sbU('patrons',{patron_id:d.patron_id},{late_count:nc,updated_at:new Date().toISOString()});p.late_count=nc;}
+    }
+    await addLog('edit',`MiFi #${suspNum} <strong style="color:var(--yellow)">SUSPENDED</strong>${d.patron_id?' — Patron '+d.patron_id:''} — Due: ${fromInput(dueDate)}${notes?' — '+notes:''}`);
+    closeModal('suspend');renderDevices();renderPatrons();
+    toast('Device suspended','var(--yellow)');
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════
+//  DEACTIVATE
+// ═══════════════════════════════════════════════════════
+let deactNum=null;
+function openDeactivate(num){
+  deactNum=num;
+  const d=devices.find(x=>x.device_num===num);
+  document.getElementById('deact-num').textContent=num;
+  document.getElementById('deact-info').innerHTML=`
+    <strong>MiFi #${num}</strong> &mdash; ${d.barcode||''} &mdash; <code style="color:var(--cyan)">${d.library||''}</code><br>
+    Status: <span class="badge badge-${d.status}">${slbl(d.status)}</span>
+    ${d.patron_id?`&nbsp;&bull;&nbsp; Patron: <strong>${d.patron_id}</strong> &nbsp;${d.patron_email||''}`:''}`;
+  document.getElementById('deact-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('deact-notes').value='';
+  document.getElementById('modal-deactivate').classList.remove('hidden');
+}
+async function doDeactivate(){
+  const d=devices.find(x=>x.device_num===deactNum);
+  const reason=document.getElementById('deact-reason').value;
+  const notes=document.getElementById('deact-notes').value.trim();
+  const deactDate=document.getElementById('deact-date').value;
+  const noteStr=`Deactivated ${fromInput(deactDate)} — ${reason}${notes?' — '+notes:''}`;
+  toast('Deactivating...');
+  try{
+    const upd={status:'D',notes:noteStr,updated_at:new Date().toISOString()};
+    await sbU('devices',{device_num:deactNum},upd);
+    Object.assign(d,upd);
+    await addLog('edit',`MiFi #${deactNum} <strong style="color:var(--red)">DEACTIVATED</strong> — ${reason}${notes?' — '+notes:''}`);
+    closeModal('deactivate');renderDevices();
+    toast('Device deactivated','var(--red)');
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAKE AVAILABLE
+// ═══════════════════════════════════════════════════════
+let availNum=null;
+function openMakeAvail(num){
+  availNum=num;
+  const d=devices.find(x=>x.device_num===num);
+  document.getElementById('avail-num').textContent=num;
+  document.getElementById('avail-info').innerHTML=`
+    <strong>MiFi #${num}</strong> &mdash; ${d.barcode||''} &mdash; <code style="color:var(--cyan)">${d.library||''}</code><br>
+    Current Status: <span class="badge badge-${d.status}">${slbl(d.status)}</span>
+    ${d.notes?`<br><span style="color:var(--muted);font-size:12px">Notes: ${d.notes}</span>`:''}`;
+  document.getElementById('avail-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('avail-lib').value=d.library||'COL-HQ';
+  document.getElementById('avail-notes').value='';
+  document.getElementById('modal-avail').classList.remove('hidden');
+}
+async function doMakeAvail(){
+  const d=devices.find(x=>x.device_num===availNum);
+  const lib=document.getElementById('avail-lib').value;
+  const notes=document.getElementById('avail-notes').value.trim();
+  const availDate=fromInput(document.getElementById('avail-date').value);
+  toast('Updating...');
+  try{
+    const upd={status:'A',due_date:'',patron_id:'',patron_email:'',library:lib,notes:notes||'',updated_at:new Date().toISOString()};
+    await sbU('devices',{device_num:availNum},upd);
+    Object.assign(d,upd);
+    await addLog('return',`MiFi #${availNum} <strong style="color:var(--green)">MADE AVAILABLE</strong> at ${lib}${notes?' — '+notes:''}`);
+    closeModal('avail');renderDevices();
+    toast('Device now available','var(--green)');
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════
+//  LATE DEVICES LIST
+// ═══════════════════════════════════════════════════════
+function openLateDevices(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const late=devices.filter(d=>isOD(d)).sort((a,b)=>{
+    const da=pd(a.due_date),db=pd(b.due_date);
+    return da-db; // oldest due date first
+  });
+  const tbody=document.getElementById('late-tbody');
+  tbody.innerHTML='';
+  document.getElementById('late-empty').classList.toggle('hidden',late.length>0);
+  document.getElementById('late-count').textContent=late.length>0?`${late.length} overdue device${late.length>1?'s':''}`:'' ;
+  for(const d of late){
+    const due=pd(d.due_date);
+    const overdueDays=Math.round((today-due)/86400000);
+    const p=d.patron_id?patrons.find(x=>x.patron_id===d.patron_id):null;
+    const tr=document.createElement('tr');
+    const odStyle=overdueDays>7?'font-weight:700;color:#fff;background:#e53935;padding:2px 8px;border-radius:4px':'font-weight:700;color:#000;background:#f0b429;padding:2px 8px;border-radius:4px';
+    tr.innerHTML=`
+      <td><strong class="mono">#${d.device_num}</strong></td>
+      <td class="mono">${d.barcode||'&mdash;'}</td>
+      <td><code style="color:var(--cyan);font-size:11px">${d.library||''}</code></td>
+      <td class="overdue">${fd(d.due_date)}</td>
+      <td><span style="${odStyle}">${overdueDays}d overdue</span></td>
+      <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'&mdash;'}${p&&p.blocked==='Y'?' <span class="badge badge-BLOCKED" style="font-size:10px">BLOCKED</span>':''}</td>
+      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.patron_email||'&mdash;'}</td>
+      <td>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-warn btn-sm" onclick="closeModal('late');openSuspend('${d.device_num}')">&#9888; Suspend</button>
+          <button class="btn btn-success btn-sm" onclick="closeModal('late');openRet('${d.device_num}')">&#8617; Return</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+  document.getElementById('modal-late').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PATRON LATE HISTORY
+// ═══════════════════════════════════════════════════════
+function openPatronHistory(){
+  document.getElementById('ph-pid').value='';
+  document.getElementById('ph-result').style.display='none';
+  document.getElementById('ph-notfound').style.display='none';
+  // Populate datalist
+  const dl=document.getElementById('ph-dl');
+  dl.innerHTML=patrons.map(p=>`<option value="${p.patron_id}">${p.patron_id} — ${p.email}</option>`).join('');
+  document.getElementById('modal-pat-history').classList.remove('hidden');
+}
+
+function lookupPatronHistory(){
+  const pid=document.getElementById('ph-pid').value.trim();
+  if(!pid)return;
+  const p=patrons.find(x=>x.patron_id===pid);
+  const resultEl=document.getElementById('ph-result');
+  const nfEl=document.getElementById('ph-notfound');
+
+  if(!p){
+    resultEl.style.display='none';
+    nfEl.style.display='block';
+    nfEl.textContent=`Patron ID "${pid}" not found in the patron list.`;
+    return;
+  }
+
+  // Count suspensions from log entries involving this patron
+  const logMentions=logE.filter(e=>e.msg&&e.msg.includes(pid));
+  const suspensions=logMentions.filter(e=>e.msg.toUpperCase().includes('SUSPEND')||e.type==='edit'&&e.msg.toUpperCase().includes('SUSPEND'));
+  const checkouts=logMentions.filter(e=>e.type==='checkout');
+  const returns=logMentions.filter(e=>e.type==='return');
+
+  // Also check devices currently/previously associated
+  const devicesForPatron=devices.filter(d=>d.patron_id===pid);
+
+  // Late count from patron record
+  const recordedLate=parseInt(p.late_count||0);
+
+  document.getElementById('ph-summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Patron ID</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--accent2)">${p.patron_id}</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Late Returns</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:${recordedLate>0?'var(--orange)':'var(--green)'}">${recordedLate}</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Log Entries</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--cyan)">${logMentions.length}</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Status</div>
+        <div style="font-size:13px;font-weight:700;margin-top:4px">${p.blocked==='Y'?'<span class="badge badge-BLOCKED">BLOCKED</span>':p.warned==='Y'?'<span class="badge badge-WARNED">WARNED</span>':'<span style="color:var(--green)">OK</span>'}</div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text);margin-bottom:4px;"><strong>Email:</strong> ${p.email||'None on file'}</div>
+    ${p.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;"><strong>Notes:</strong> ${p.notes}</div>`:''}
+    <div style="margin-top:10px;display:flex;gap:8px;">
+      <span style="font-size:12px;color:var(--muted)">Checkouts in log: <strong style="color:var(--accent2)">${checkouts.length}</strong></span>
+      <span style="font-size:12px;color:var(--muted)">&bull; Returns: <strong style="color:var(--green)">${returns.length}</strong></span>
+      <span style="font-size:12px;color:var(--muted)">&bull; Suspensions in log: <strong style="color:var(--yellow)">${suspensions.length}</strong></span>
+    </div>`;
+
+  // Show log entries
+  const logEl=document.getElementById('ph-log');
+  const dots={checkout:'&#9679;',return:'&#9679;',edit:'&#9670;',add:'&#9733;',delete:'&#10005;'};
+  logEl.innerHTML=logMentions.length
+    ?logMentions.map(e=>`<div class="log-entry ${e.type}" style="margin-bottom:6px"><div class="dot">${dots[e.type]||'&#8226;'}</div><div class="ts">${e.ts}</div><div class="msg">${e.msg}</div></div>`).join('')
+    :`<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center">No log entries found for Patron ${pid}</div>`;
+
+  nfEl.style.display='none';
+  resultEl.style.display='block';
+}
+
 // MODALS
 function closeModal(n){document.getElementById('modal-'+n).classList.add('hidden');}
-document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.add('hidden');}));
-
 init();
 </script>
 </body>
