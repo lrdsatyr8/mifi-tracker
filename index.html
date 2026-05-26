@@ -221,6 +221,64 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 /* ── TOAST ── */
 .toast{position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#111827,#1e2d45);border:1px solid var(--border2);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;color:var(--text);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.5);}
 .toast.show{opacity:1;}
+
+/* ── ACTION BAR ── */
+#action-bar{
+  background:linear-gradient(90deg,#0d1530,#0f1e40,#0d1530);
+  border-bottom:1px solid var(--border2);
+  padding:8px 20px;
+  display:flex;align-items:center;gap:10px;
+  flex-wrap:nowrap;overflow-x:auto;
+  flex-shrink:0;
+  -webkit-overflow-scrolling:touch;
+}
+.action-bar-btn{
+  border:none;border-radius:10px;cursor:pointer;
+  font-family:inherit;font-weight:700;font-size:13px;
+  display:flex;align-items:center;gap:7px;
+  padding:10px 20px;white-space:nowrap;flex-shrink:0;
+  transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.4);
+  letter-spacing:.2px;
+}
+.action-bar-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.5);}
+.action-bar-btn:active{transform:scale(.97);}
+.action-bar-btn .ab-icon{font-size:18px;line-height:1;}
+.ab-checkout{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;}
+.ab-return{background:linear-gradient(135deg,#065f46,#0d9488);color:#fff;}
+.ab-search{background:linear-gradient(135deg,#1e3a8a,#0e7490);color:#fff;}
+.ab-late{background:linear-gradient(135deg,#991b1b,#b91c1c);color:#fff;}
+.action-bar-sep{width:1px;height:32px;background:var(--border2);flex-shrink:0;margin:0 4px;}
+
+/* ── GLOBAL SEARCH MODAL ── */
+#search-bar-input{
+  width:100%;background:var(--bg);border:1px solid var(--border2);
+  border-radius:10px;padding:14px 18px;color:var(--text);
+  font-family:inherit;font-size:16px;outline:none;
+  transition:border-color .15s;
+}
+#search-bar-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.2);}
+.search-result-section{margin-bottom:16px;}
+.search-result-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:8px;padding:0 4px;}
+.search-result-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s;}
+.search-result-item:hover{border-color:var(--accent);background:rgba(59,130,246,.08);}
+.sri-icon{font-size:20px;flex-shrink:0;}
+.sri-main{flex:1;min-width:0;}
+.sri-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.sri-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sri-badge{flex-shrink:0;}
+.search-empty{color:var(--muted);text-align:center;padding:24px;font-size:13px;}
+
+/* Quick action modal — device picker */
+.qpick-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;}
+.qpick-item:hover{border-color:var(--accent);background:rgba(59,130,246,.08);}
+
+@media(max-width:767px){
+  #action-bar{padding:8px 12px;gap:8px;}
+  .action-bar-btn{padding:9px 14px;font-size:12px;}
+  .action-bar-btn .ab-icon{font-size:16px;}
+  .action-bar-btn span.ab-label{display:none;}
+  .action-bar-btn .ab-icon-label{display:block;}
+}
 .hidden{display:none!important;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -322,7 +380,7 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 <body>
 <div id="app">
 <header>
-  <div class="logo">CCL<span>/</span>MiFi<span> Tracker</span></div>
+  <div class="logo">CCML<span>/</span>MiFi<span> Tracker</span></div>
   <div id="db-status" class="loading">&#9203; Connecting...</div>
   <button id="menu-toggle" onclick="toggleMenu()" aria-label="Menu">&#9776;</button>
   <nav id="main-nav">
@@ -332,7 +390,28 @@ tbody td{padding:9px 12px;vertical-align:middle;}
     <button onclick="showSection('io');closeMenu()">&#8645; Import/Export</button>
   </nav>
 </header>
-<div class="main-area">
+
+<!-- ═══ ACTION BAR ═══ -->
+<div id="action-bar">
+  <button class="action-bar-btn ab-checkout" onclick="openQuickCheckout()" title="Check Out a Device">
+    <span class="ab-icon">&#128228;</span>
+    <span class="ab-label">Check Out</span>
+  </button>
+  <button class="action-bar-btn ab-return" onclick="openQuickReturn()" title="Return a Device">
+    <span class="ab-icon">&#8617;</span>
+    <span class="ab-label">Return Device</span>
+  </button>
+  <div class="action-bar-sep"></div>
+  <button class="action-bar-btn ab-search" onclick="openGlobalSearch()" title="Search Devices &amp; Patrons">
+    <span class="ab-icon">&#128269;</span>
+    <span class="ab-label">Search</span>
+  </button>
+  <div class="action-bar-sep"></div>
+  <button class="action-bar-btn ab-late" onclick="openLateDevices()" title="View Late &amp; Overdue Devices">
+    <span class="ab-icon">&#9888;</span>
+    <span class="ab-label">Late / Overdue</span>
+  </button>
+</div>
 <div class="sidebar" id="sidebar">
   <button class="sidebar-toggle" onclick="toggleSidebar()">
     <span id="summary-title">Summary</span>
@@ -485,7 +564,69 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 
 <div class="toast" id="toast"></div>
 
-<!-- ═══ SUSPEND MODAL ═══ -->
+<!-- ═══ QUICK CHECKOUT MODAL ═══ -->
+<div class="overlay hidden" id="modal-quick-checkout">
+  <div class="modal modal-sm">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(29,78,216,.2),rgba(124,58,237,.15))">
+      <h2 style="color:#a78bfa">&#128228; Quick Check Out</h2>
+      <button class="close-btn" onclick="closeModal('quick-checkout')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Type or scan a device number to check it out. Only Available and Processing devices are shown.</p>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Device # or Barcode</label>
+        <input id="qco-search" placeholder="Type device # or barcode..." oninput="filterQuickDevices('qco')" autocomplete="off" style="font-size:16px;">
+      </div>
+      <div id="qco-list" style="max-height:340px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('quick-checkout')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ QUICK RETURN MODAL ═══ -->
+<div class="overlay hidden" id="modal-quick-return">
+  <div class="modal modal-sm">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(6,95,70,.2),rgba(13,148,136,.15))">
+      <h2 style="color:var(--green2)">&#8617; Quick Return</h2>
+      <button class="close-btn" onclick="closeModal('quick-return')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Type or scan a device number to return it. Only Checked Out devices are shown.</p>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Device # or Barcode</label>
+        <input id="qret-search" placeholder="Type device # or barcode..." oninput="filterQuickDevices('qret')" autocomplete="off" style="font-size:16px;">
+      </div>
+      <div id="qret-list" style="max-height:340px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('quick-return')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GLOBAL SEARCH MODAL ═══ -->
+<div class="overlay hidden" id="modal-global-search">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(30,58,138,.2),rgba(14,116,144,.15))">
+      <h2 style="color:var(--accent2)">&#128269; Search Devices &amp; Patrons</h2>
+      <button class="close-btn" onclick="closeModal('global-search')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input id="global-search-input" placeholder="Search by device #, barcode, IMEI, patron ID, email, phone, name..." autocomplete="off"
+        style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:14px 18px;color:var(--text);font-family:inherit;font-size:16px;outline:none;margin-bottom:16px;"
+        oninput="runGlobalSearch()">
+      <div id="global-search-results">
+        <div class="search-empty">Start typing to search across all devices and patrons.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div id="gs-count" style="margin-right:auto;font-size:12px;color:var(--muted);"></div>
+      <button class="btn btn-ghost" onclick="closeModal('global-search')">Close</button>
+    </div>
+  </div>
+</div>
 <div class="overlay hidden" id="modal-suspend">
   <div class="modal modal-sm">
     <div class="modal-header" style="background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08))">
@@ -648,8 +789,8 @@ tbody td{padding:9px 12px;vertical-align:middle;}
     <div class="modal-header"><h2>Check Out MiFi #<span id="co-num"></span></h2><button class="close-btn" onclick="closeModal('checkout')">&#10005;</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label>Patron ID</label><input id="co-pid" list="co-dl" placeholder="5-digit ID" oninput="lookupP()"><datalist id="co-dl"></datalist></div>
-        <div class="form-group"><label>Patron Email</label><input id="co-email" placeholder="Auto-fills from patron list"></div>
+        <div class="form-group"><label>Patron ID</label><input id="co-pid" list="co-dl" placeholder="5-digit ID" oninput="lookupP()" autocomplete="off"><datalist id="co-dl"></datalist></div>
+        <div class="form-group"><label>Patron Email</label><input id="co-email" placeholder="Auto-fills or enter for new patron"></div>
         <div class="form-group"><label>Checkout Date</label><input id="co-date" type="date"></div>
         <div class="form-group"><label>Due Date (+21 days)</label><input id="co-due" type="date"></div>
         <div class="form-group"><label>Location</label>
@@ -657,11 +798,42 @@ tbody td{padding:9px 12px;vertical-align:middle;}
         </div>
         <div class="form-group"><label>Notes</label><input id="co-notes" placeholder="Optional"></div>
       </div>
-      <div id="co-pinfo" style="margin-top:10px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);display:none;font-size:13px;"></div>
+
+      <!-- Existing patron info (shown when patron found) -->
+      <div id="co-pinfo" style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);display:none;font-size:13px;"></div>
+
+      <!-- New patron form (shown when patron NOT found) -->
+      <div id="co-new-patron" style="display:none;margin-top:12px;background:rgba(6,95,70,.12);border:1px solid #065f46;border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:18px">&#10133;</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--green2)">New Patron &mdash; Not in database</div>
+            <div style="font-size:11px;color:var(--muted)">This patron will be added to the patron list when you confirm checkout.</div>
+          </div>
+        </div>
+        <div class="form-grid" style="gap:10px;">
+          <div class="form-group full">
+            <label>Email Address <span style="color:var(--muted);font-weight:400">(or leave blank)</span></label>
+            <input id="co-new-email" placeholder="patron@email.com" style="font-size:14px;">
+          </div>
+          <div class="form-group">
+            <label>Blocked?</label>
+            <select id="co-new-blocked"><option value="N">No</option><option value="Y">Yes</option></select>
+          </div>
+          <div class="form-group">
+            <label>Warned?</label>
+            <select id="co-new-warned"><option value="N">No</option><option value="Y">Yes</option></select>
+          </div>
+          <div class="form-group full">
+            <label>Patron Notes <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+            <input id="co-new-notes" placeholder="e.g. Staff, phone number, special notes...">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('checkout')">Cancel</button>
-      <button class="btn btn-primary" onclick="doCheckout()">Confirm Checkout</button>
+      <button class="btn btn-primary" id="co-confirm-btn" onclick="doCheckout()">Confirm Checkout</button>
     </div>
   </div>
 </div>
@@ -1017,8 +1189,17 @@ function openCO(num){
   const t=new Date(),due=new Date(t);due.setDate(due.getDate()+21);
   document.getElementById('co-date').value=t.toISOString().split('T')[0];
   document.getElementById('co-due').value=due.toISOString().split('T')[0];
-  document.getElementById('co-pid').value='';document.getElementById('co-email').value='';document.getElementById('co-notes').value='';
+  document.getElementById('co-pid').value='';
+  document.getElementById('co-email').value='';
+  document.getElementById('co-notes').value='';
   document.getElementById('co-pinfo').style.display='none';
+  document.getElementById('co-new-patron').style.display='none';
+  document.getElementById('co-new-email').value='';
+  document.getElementById('co-new-blocked').value='N';
+  document.getElementById('co-new-warned').value='N';
+  document.getElementById('co-new-notes').value='';
+  document.getElementById('co-confirm-btn').textContent='Confirm Checkout';
+  document.getElementById('co-confirm-btn').style.background='';
   document.getElementById('co-lib').value='COL-HQ';
   document.getElementById('co-dl').innerHTML=patrons.map(p=>`<option value="${p.patron_id}">${p.patron_id} - ${p.email}</option>`).join('');
   document.getElementById('modal-checkout').classList.remove('hidden');
@@ -1027,29 +1208,94 @@ function lookupP(){
   const id=document.getElementById('co-pid').value.trim();
   const p=patrons.find(x=>x.patron_id===id);
   const box=document.getElementById('co-pinfo');
+  const newBox=document.getElementById('co-new-patron');
+  const confirmBtn=document.getElementById('co-confirm-btn');
+
   if(p){
+    // Known patron — show their info, hide new patron form
     document.getElementById('co-email').value=p.email||'';
-    let h=`<strong>${p.patron_id}</strong> &middot; ${p.email}`;
+    let h=`<span style="font-size:12px;color:var(--green2);font-weight:700">&#10003; Found in database</span><br>
+      <strong>${p.patron_id}</strong> &middot; ${p.email||'No email'}`;
     if(p.blocked==='Y')h+=` <span class="badge badge-BLOCKED">BLOCKED</span>`;
     if(p.warned==='Y')h+=` <span class="badge badge-WARNED">WARNED</span>`;
     if(parseInt(p.late_count||0)>0)h+=` <span class="badge badge-LATE">${p.late_count}&times; late</span>`;
-    box.innerHTML=h;box.style.display='block';
-  }else{box.style.display='none';document.getElementById('co-email').value='';}
+    if(p.notes)h+=`<br><span style="color:var(--muted);font-size:12px">${p.notes}</span>`;
+    box.innerHTML=h;
+    box.style.display='block';
+    box.style.borderColor='var(--border)';
+    newBox.style.display='none';
+    confirmBtn.textContent='Confirm Checkout';
+  } else if(id.length>=1){
+    // Unknown patron — show new patron entry form
+    box.style.display='none';
+    newBox.style.display='block';
+    // Pre-fill new patron email with whatever is in the email field
+    const existingEmail=document.getElementById('co-email').value.trim();
+    if(existingEmail)document.getElementById('co-new-email').value=existingEmail;
+    confirmBtn.textContent='Checkout + Add New Patron';
+    confirmBtn.style.background='linear-gradient(135deg,#065f46,#0d9488)';
+  } else {
+    box.style.display='none';
+    newBox.style.display='none';
+    confirmBtn.textContent='Confirm Checkout';
+    confirmBtn.style.background='';
+  }
 }
 async function doCheckout(){
   const pid=document.getElementById('co-pid').value.trim();
   if(!pid){alert('Please enter a Patron ID.');return;}
-  const email=document.getElementById('co-email').value.trim();
+
+  // Determine if this is a new patron
+  const existingPatron=patrons.find(x=>x.patron_id===pid);
+  const isNewPatron=!existingPatron;
+
+  // Get email — from main field if known patron, from new patron field if new
+  let email=document.getElementById('co-email').value.trim();
+  if(isNewPatron){
+    const newEmail=document.getElementById('co-new-email').value.trim();
+    if(newEmail)email=newEmail;
+  }
+
   const due=fi(document.getElementById('co-due').value);
   const notes=document.getElementById('co-notes').value.trim();
   const lib=document.getElementById('co-lib').value;
+
   toast('Saving...');
   try{
+    // ── If new patron, add them to database first ──
+    if(isNewPatron){
+      const newPatronObj={
+        patron_id:pid,
+        email:email||'',
+        blocked:document.getElementById('co-new-blocked').value,
+        warned:document.getElementById('co-new-warned').value,
+        late_count:'0',
+        notes:document.getElementById('co-new-notes').value.trim(),
+        updated_at:new Date().toISOString()
+      };
+      const res=await sbI('patrons',newPatronObj);
+      const added=Array.isArray(res)?res[0]:res;
+      patrons.push(added);
+      patrons.sort((a,b)=>parseInt(a.patron_id)-parseInt(b.patron_id));
+      await addLog('add',`New Patron <strong>${pid}</strong> (${email||'no email'}) added automatically during checkout of MiFi #${coN}.`);
+      toast(`New patron ${pid} added to database.`,'var(--green)');
+    }
+
+    // ── Save checkout to device ──
     await sbU('devices',{device_num:coN},{status:'C',patron_id:pid,patron_email:email,due_date:due,library:lib,notes:notes||undefined,updated_at:new Date().toISOString()});
     const idx=devices.findIndex(d=>d.device_num===coN);
     if(idx>=0)Object.assign(devices[idx],{status:'C',patron_id:pid,patron_email:email,due_date:due,library:lib});
-    await addLog('checkout',`MiFi #${coN} checked out to Patron <strong>${pid}</strong> (${email}) at ${lib}. Due: ${fd(due)}`);
-    closeModal('checkout');renderDevices();
+
+    await addLog('checkout',`MiFi #${coN} checked out to ${isNewPatron?'<span style="color:var(--green2)">NEW</span> ':''} Patron <strong>${pid}</strong> (${email||'no email'}) at ${lib}. Due: ${fd(due)}`);
+
+    closeModal('checkout');
+    renderDevices();
+    renderPatrons();
+
+    // Reset new patron button style
+    document.getElementById('co-confirm-btn').style.background='';
+    document.getElementById('co-confirm-btn').textContent='Confirm Checkout';
+
   }catch(e){alert('Save failed: '+e.message);}
 }
 
@@ -1538,8 +1784,136 @@ function lookupPatronHistory(){
   resultEl.style.display='block';
 }
 
+// ═══════════════════════════════════════════════════════
+//  QUICK CHECKOUT
+// ═══════════════════════════════════════════════════════
+function openQuickCheckout(){
+  document.getElementById('qco-search').value='';
+  filterQuickDevices('qco');
+  document.getElementById('modal-quick-checkout').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('qco-search').focus(),100);
+}
+function filterQuickDevices(mode){
+  const isCheckout=(mode==='qco');
+  const q=(document.getElementById(isCheckout?'qco-search':'qret-search').value||'').toLowerCase();
+  const validStatus=isCheckout?['A','P']:['C'];
+  const list=devices.filter(d=>{
+    if(!validStatus.includes(d.status))return false;
+    if(!q)return true;
+    return[d.device_num,d.barcode,d.imei,d.phone,d.patron_id].some(v=>(v||'').toLowerCase().includes(q));
+  }).slice(0,30);
+  const container=document.getElementById(isCheckout?'qco-list':'qret-list');
+  if(!list.length){
+    container.innerHTML=`<div class="search-empty">${q?'No matching devices found.':'No devices with that status.'}</div>`;
+    return;
+  }
+  container.innerHTML=list.map(d=>{
+    const od=isOD(d);
+    const dueInfo=d.due_date?`Due: <span class="${od?'overdue':''}">${fd(d.due_date)}</span>`:'';
+    const patron=d.patron_id?`Patron ${d.patron_id} &bull; ${d.patron_email||''}`:'';
+    return`<div class="qpick-item" onclick="pickDevice('${d.device_num}','${isCheckout?'checkout':'return'}')">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--accent2)">#${d.device_num}</span>
+          <span class="badge badge-${d.status}">${slbl(d.status)}</span>
+          <code style="font-size:11px;color:var(--cyan)">${d.library||''}</code>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">${d.barcode||''} ${d.phone?'&bull; '+d.phone:''}</div>
+        ${patron?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${patron} ${dueInfo}</div>`:''}
+        ${od?`<div style="margin-top:4px"><span style="background:#e53935;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">OVERDUE</span></div>`:''}
+      </div>
+      <div style="font-size:20px;color:var(--muted);flex-shrink:0">&#8250;</div>
+    </div>`;
+  }).join('');
+}
+function pickDevice(devNum,action){
+  if(action==='checkout'){closeModal('quick-checkout');openCO(devNum);}
+  else{closeModal('quick-return');openRet(devNum);}
+}
+
+// ═══════════════════════════════════════════════════════
+//  QUICK RETURN
+// ═══════════════════════════════════════════════════════
+function openQuickReturn(){
+  document.getElementById('qret-search').value='';
+  filterQuickDevices('qret');
+  document.getElementById('modal-quick-return').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('qret-search').focus(),100);
+}
+
+// ═══════════════════════════════════════════════════════
+//  GLOBAL SEARCH
+// ═══════════════════════════════════════════════════════
+function openGlobalSearch(){
+  document.getElementById('global-search-input').value='';
+  document.getElementById('global-search-results').innerHTML='<div class="search-empty">Start typing to search across all devices and patrons.</div>';
+  document.getElementById('gs-count').textContent='';
+  document.getElementById('modal-global-search').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('global-search-input').focus(),100);
+}
+function runGlobalSearch(){
+  const q=document.getElementById('global-search-input').value.trim().toLowerCase();
+  const container=document.getElementById('global-search-results');
+  const countEl=document.getElementById('gs-count');
+  if(q.length<1){
+    container.innerHTML='<div class="search-empty">Start typing to search across all devices and patrons.</div>';
+    countEl.textContent='';return;
+  }
+  const devMatches=devices.filter(d=>
+    [d.device_num,d.barcode,d.imei,d.last5,d.phone,d.patron_id,d.patron_email,d.notes,d.library]
+    .some(v=>(v||'').toLowerCase().includes(q))
+  ).slice(0,20);
+  const patMatches=patrons.filter(p=>
+    [p.patron_id,p.email,p.notes].some(v=>(v||'').toLowerCase().includes(q))
+  ).slice(0,20);
+  const total=devMatches.length+patMatches.length;
+  countEl.textContent=total?`${total} result${total>1?'s':''}`:'' ;
+  if(!total){container.innerHTML='<div class="search-empty">No results found for &ldquo;'+q+'&rdquo;.</div>';return;}
+  let html='';
+  if(devMatches.length){
+    html+=`<div class="search-result-section"><div class="search-result-label">&#128225; Devices (${devMatches.length})</div>`;
+    for(const d of devMatches){
+      const od=isOD(d);
+      const dueText=d.due_date?`Due ${fd(d.due_date)}${od?' &mdash; OVERDUE':''}` :'';
+      const sub=[d.barcode,d.phone,d.patron_id?'Patron '+d.patron_id:'',dueText,d.library].filter(Boolean).join(' &bull; ');
+      html+=`<div class="search-result-item" onclick="closeModal('global-search');openDt('${d.device_num}')">
+        <div class="sri-icon">&#128225;</div>
+        <div class="sri-main">
+          <div class="sri-title">MiFi #${d.device_num} ${d.patron_email?'&mdash; '+d.patron_email:''}</div>
+          <div class="sri-sub">${sub}</div>
+        </div>
+        <div class="sri-badge"><span class="badge badge-${d.status}">${slbl(d.status)}</span></div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  if(patMatches.length){
+    html+=`<div class="search-result-section"><div class="search-result-label">&#128100; Patrons (${patMatches.length})</div>`;
+    for(const p of patMatches){
+      const lc=parseInt(p.late_count||0);
+      const flags=[p.blocked==='Y'?'BLOCKED':'',p.warned==='Y'?'WARNED':'',lc>0?lc+'x late':'',
+        (p.notes||'').toUpperCase().includes('STAFF')?'STAFF':''].filter(Boolean).join(' &bull; ');
+      html+=`<div class="search-result-item" onclick="closeModal('global-search');showSection('patrons');setTimeout(()=>{document.getElementById('pat-search').value='${p.patron_id}';renderPatrons();},100)">
+        <div class="sri-icon">&#128100;</div>
+        <div class="sri-main">
+          <div class="sri-title">${p.patron_id} &mdash; ${p.email||'No email'}</div>
+          <div class="sri-sub">${flags||'No flags'}</div>
+        </div>
+        <div class="sri-badge" style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+          ${p.blocked==='Y'?'<span class="badge badge-BLOCKED" style="font-size:10px">BLOCKED</span>':''}
+          ${p.warned==='Y'?'<span class="badge badge-WARNED" style="font-size:10px">WARNED</span>':''}
+          ${lc>0?`<span class="badge badge-LATE" style="font-size:10px">${lc}&#215;</span>`:''}
+        </div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  container.innerHTML=html;
+}
+
 // MODALS
 function closeModal(n){document.getElementById('modal-'+n).classList.add('hidden');}
+
 // ═══════════════════════════════════════════════════════
 //  MOBILE MENU & SIDEBAR TOGGLES
 // ═══════════════════════════════════════════════════════
