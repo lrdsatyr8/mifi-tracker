@@ -136,13 +136,13 @@ tbody td{padding:8px 12px;vertical-align:middle;}
 </header>
 <div class="main-area">
 <div class="sidebar">
-  <div class="sidebar-title">Summary</div>
-  <div class="stat-card green" onclick="setFilter('A','')"><div class="lbl">Available</div><div class="val" id="stat-A">-</div></div>
-  <div class="stat-card blue"  onclick="setFilter('C','')"><div class="lbl">Checked Out</div><div class="val" id="stat-C">-</div></div>
-  <div class="stat-card red"   onclick="setFilter('OD','')"><div class="lbl">Overdue</div><div class="val" id="stat-OD">-</div></div>
-  <div class="stat-card yellow" onclick="setFilter('S','')"><div class="lbl">Suspended</div><div class="val" id="stat-S">-</div></div>
-  <div class="stat-card orange" onclick="setFilter('M','')"><div class="lbl">Missing</div><div class="val" id="stat-M">-</div></div>
-  <div class="stat-card purple" onclick="setFilter('D','')"><div class="lbl">Deactivated</div><div class="val" id="stat-D">-</div></div>
+  <div class="sidebar-title" id="summary-title">Summary</div>
+  <div class="stat-card green" onclick="setFilter('A',document.getElementById('dev-lib').value)"><div class="lbl">Available</div><div class="val" id="stat-A">-</div></div>
+  <div class="stat-card blue"  onclick="setFilter('C',document.getElementById('dev-lib').value)"><div class="lbl">Checked Out</div><div class="val" id="stat-C">-</div></div>
+  <div class="stat-card red"   onclick="setFilter('OD',document.getElementById('dev-lib').value)"><div class="lbl">Overdue</div><div class="val" id="stat-OD">-</div></div>
+  <div class="stat-card yellow" onclick="setFilter('S',document.getElementById('dev-lib').value)"><div class="lbl">Suspended</div><div class="val" id="stat-S">-</div></div>
+  <div class="stat-card orange" onclick="setFilter('M',document.getElementById('dev-lib').value)"><div class="lbl">Missing</div><div class="val" id="stat-M">-</div></div>
+  <div class="stat-card purple" onclick="setFilter('D',document.getElementById('dev-lib').value)"><div class="lbl">Deactivated</div><div class="val" id="stat-D">-</div></div>
   <div class="sidebar-title">Available by Location</div>
   <div id="loc-breakdown"></div>
 </div>
@@ -175,8 +175,7 @@ tbody td{padding:8px 12px;vertical-align:middle;}
         <th onclick="sortDev('status')">Status</th>
         <th>Barcode</th><th>Phone</th>
         <th onclick="sortDev('library')">Location</th>
-        <th onclick="sortDev('due_date')">Due Date</th>
-        <th onclick="sortDev('due_date')">Days Out</th>
+        <th onclick="sortDev('due_date')">Due Date / Days</th>
         <th>Patron</th><th>Contract</th><th>Actions</th>
       </tr></thead>
       <tbody id="dev-tbody"></tbody>
@@ -399,6 +398,7 @@ const LIBS=['COL-HQ','COL-COT','COL-ED','COL-BK'];
 
 let devices=[],patrons=[],logE=[];
 let devTab='all',devSrt={col:'device_num',dir:1};
+const DEFAULT_LIB='COL-HQ';
 
 async function sbG(t,p=''){const r=await fetch(`${SB}/rest/v1/${t}?${p}&limit=5000`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function sbI(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
@@ -425,6 +425,8 @@ async function init(){
     [devices,patrons,logE]=await Promise.all([sbG('devices','order=device_num.asc'),sbG('patrons','order=patron_id.asc'),sbG('txlog','order=id.desc&limit=500')]);
     if(devices.length===0)await seed();
     st.className='ok';st.textContent='Connected';
+    // Default to COL-HQ on load
+    document.getElementById('dev-lib').value=DEFAULT_LIB;
     renderDevices();renderPatrons();renderLog();updateStats();
   }catch(e){st.className='err';st.textContent='DB Error';alert('Connection failed: '+e.message);}
 }
@@ -449,22 +451,28 @@ async function addLog(type,msg){
 
 // STATS + LOCATION BREAKDOWN
 function updateStats(){
+  const curLib=document.getElementById('dev-lib').value;
+  // Count scoped to current library (or all if none selected)
+  const scope=curLib?devices.filter(d=>d.library===curLib):devices;
   let A=0,C=0,S=0,D=0,M=0,OD=0;
-  const lc={};LIBS.forEach(l=>lc[l]=0);
-  for(const d of devices){
-    if(d.status==='A'){A++;if(lc[d.library]!==undefined)lc[d.library]++;}
+  for(const d of scope){
+    if(d.status==='A')A++;
     else if(d.status==='C'){C++;if(isOD(d))OD++;}
     else if(d.status==='S')S++;
     else if(d.status==='D')D++;
     else if(d.status==='M')M++;
   }
+  // Update sidebar title to show which location
+  document.getElementById('summary-title').textContent=curLib?`Summary \u2014 ${curLib}`:'Summary \u2014 All Locations';
   document.getElementById('stat-A').textContent=A;
   document.getElementById('stat-C').textContent=C;
   document.getElementById('stat-OD').textContent=OD;
   document.getElementById('stat-S').textContent=S;
   document.getElementById('stat-M').textContent=M;
   document.getElementById('stat-D').textContent=D;
-  const curLib=document.getElementById('dev-lib').value;
+  // Available by location breakdown (always shows all locations)
+  const lc={};LIBS.forEach(l=>lc[l]=0);
+  devices.forEach(d=>{if(d.status==='A'&&lc[d.library]!==undefined)lc[d.library]++;});
   document.getElementById('loc-breakdown').innerHTML=LIBS.map(l=>`<div class="loc-row ${curLib===l?'active-loc':''}" onclick="filterLoc('${l}')"><span class="loc-name">${l}</span><span class="loc-count">${lc[l]}</span></div>`).join('');
 }
 
@@ -504,7 +512,7 @@ function renderDevices(){
     [...LIBS,'Other'].forEach(l=>{
       if(!grp[l]||grp[l].length===0)return;
       const hdr=document.createElement('tr');hdr.className='loc-header';
-      hdr.innerHTML=`<td colspan="10">&#128205; ${l} &mdash; ${grp[l].length} available</td>`;
+      hdr.innerHTML=`<td colspan="9">&#128205; ${l} &mdash; ${grp[l].length} available</td>`;
       tbody.appendChild(hdr);
       grp[l].forEach(d=>tbody.appendChild(mkRow(d)));
     });
@@ -513,44 +521,54 @@ function renderDevices(){
 }
 
 function daysOut(d){
-  // Returns {days, overdueDays} for any checked-out device
   if(d.status!=='C'||!d.due_date)return null;
   const due=pd(d.due_date);if(!due)return null;
   const today=new Date();today.setHours(0,0,0,0);
-  // days since checkout = 21 - days remaining until due (or 21 + days past due)
   const daysUntilDue=Math.round((due-today)/86400000);
-  const totalOut=21-daysUntilDue;          // days it has been checked out
+  const totalOut=21-daysUntilDue;
   const overdueDays=daysUntilDue<0?Math.abs(daysUntilDue):0;
-  return{totalOut:Math.max(totalOut,0),overdueDays};
+  return{totalOut:Math.max(totalOut,0),overdueDays,daysUntilDue};
 }
 
-function daysOutCell(d){
-  if(d.status!=='C')return'&mdash;';
+function dueDateCell(d){
+  // For non-checked-out devices just show the date plainly
+  if(d.status!=='C'){
+    return`<span style="color:var(--muted)">${fd(d.due_date)||'&mdash;'}</span>`;
+  }
   const info=daysOut(d);
-  if(!info)return'&mdash;';
-  const {totalOut,overdueDays}=info;
+  if(!info)return`<span style="color:var(--muted)">&mdash;</span>`;
+  const{totalOut,overdueDays,daysUntilDue}=info;
+  const dateStr=fd(d.due_date);
   if(overdueDays===0){
-    // still on time — show days out in normal muted style
-    return`<span class="mono" style="color:var(--muted)">${totalOut}d</span>`;
+    // On time — date in normal colour, days out muted below
+    const dueLabel=daysUntilDue===0?'due today':`${daysUntilDue}d left`;
+    return`<div style="line-height:1.6">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">${dateStr}</div>
+      <div style="font-size:11px;color:var(--muted)">${totalOut}d out &nbsp;&bull;&nbsp; ${dueLabel}</div>
+    </div>`;
   }else if(overdueDays<=7){
-    // overdue 1-7 days — bold yellow
-    return`<span class="mono" style="font-weight:700;color:#000;background:#f0b429;padding:2px 7px;border-radius:4px;">${totalOut}d &nbsp;+${overdueDays}d late</span>`;
+    // Overdue 1-7 days — yellow highlight
+    return`<div style="line-height:1.6">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">${dateStr}</div>
+      <div><span style="font-weight:700;color:#000;background:#f0b429;padding:1px 6px;border-radius:4px;font-size:11px">${totalOut}d out &nbsp;&#9888; ${overdueDays}d overdue</span></div>
+    </div>`;
   }else{
-    // overdue more than 7 days — bold bright red
-    return`<span class="mono" style="font-weight:700;color:#fff;background:#e53935;padding:2px 7px;border-radius:4px;">${totalOut}d &nbsp;+${overdueDays}d late</span>`;
+    // Overdue 8+ days — red highlight
+    return`<div style="line-height:1.6">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">${dateStr}</div>
+      <div><span style="font-weight:700;color:#fff;background:#e53935;padding:1px 6px;border-radius:4px;font-size:11px">${totalOut}d out &nbsp;&#9888; ${overdueDays}d overdue</span></div>
+    </div>`;
   }
 }
 
 function mkRow(d){
-  const od=isOD(d),soon=isDS(d);
   const tr=document.createElement('tr');
   tr.innerHTML=`<td><strong class="mono">#${d.device_num}</strong></td>
     <td><span class="badge badge-${d.status}">${slbl(d.status)}</span></td>
     <td class="mono">${d.barcode||'&mdash;'}</td>
     <td class="mono">${d.phone||'&mdash;'}</td>
     <td><code style="font-size:11px;color:var(--cyan)">${d.library||''}</code></td>
-    <td class="${od?'overdue':soon?'due-soon':''}">${fd(d.due_date)||'&mdash;'}</td>
-    <td>${daysOutCell(d)}</td>
+    <td>${dueDateCell(d)}</td>
     <td>${d.patron_id?`<span class="mono" style="color:var(--accent2)">${d.patron_id}</span>`:'&mdash;'}</td>
     <td>${d.under_contract==='Y'?'<span style="color:var(--green)">&#10003;</span>':'<span style="color:var(--muted)">No</span>'}</td>
     <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
